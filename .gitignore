@@ -1,0 +1,5 @@
+node_modules/
+js/lib/xlsx.full.min.js
+.DS_Store
+*.log
+salidas/
