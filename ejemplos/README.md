@@ -1,0 +1,1 @@
+Archivos de prueba con datos FICTICIOS para probar la herramienta sin usar contactos reales: un libro de Excel con 3 hojas, un CSV con duplicados y errores a proposito, una agenda vCard, una exportacion de chat de WhatsApp y una lista para pegar.
