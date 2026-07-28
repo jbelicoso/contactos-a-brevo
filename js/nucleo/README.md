@@ -1,0 +1,1 @@
+Logica pura de la aplicacion: telefonos, emails, lectores de archivos, deteccion de columnas y generacion del CSV. El mismo codigo se ejecuta en el navegador, dentro del Web Worker y en Node.js para las pruebas.
