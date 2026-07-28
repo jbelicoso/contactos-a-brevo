@@ -1,0 +1,1 @@
+Bateria de 70 pruebas del nucleo, sin dependencias externas. Ejecutar con: npm test  (o node pruebas/pruebas.js). Cubre telefonos de 8 paises, emails, nombres, CSV, vCard, WhatsApp, deteccion de columnas, duplicados, los tres perfiles de CSV, codificaciones y una carga de 100.000 contactos.
