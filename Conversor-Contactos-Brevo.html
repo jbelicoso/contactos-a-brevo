@@ -1,0 +1,2831 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contactos → Brevo | Conversor de contactos a CSV</title>
+<meta name="description" content="Convierte Excel, listas de contactos y exportaciones de WhatsApp en un CSV listo para importar en Brevo. Todo el proceso ocurre en tu navegador.">
+<style>
+/* =============================================================================
+   estilos.css — Hoja de estilos única de la aplicación
+   Paleta clara y sobria, pensada para lectura larga de tablas.
+   ========================================================================== */
+
+:root {
+  --azul:        #0b5fff;
+  --azul-oscuro: #0a49c4;
+  --azul-suave:  #e8f0ff;
+  --verde:       #0f9d58;
+  --verde-suave: #e6f6ee;
+  --ambar:       #b26b00;
+  --ambar-suave: #fff4e0;
+  --rojo:        #d13438;
+  --rojo-suave:  #fdecec;
+
+  --tinta:       #15181d;
+  --tinta-media: #4b5563;
+  --tinta-tenue: #7b8494;
+  --borde:       #e2e6ee;
+  --fondo:       #f5f7fb;
+  --papel:       #ffffff;
+
+  --radio:   12px;
+  --radio-s: 8px;
+  --sombra:  0 1px 2px rgba(16, 24, 40, .05), 0 8px 24px rgba(16, 24, 40, .06);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--fondo);
+  color: var(--tinta);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.contenedor { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+.oculto { display: none !important; }
+.tenue { color: var(--tinta-tenue); font-weight: 400; }
+
+/* ---------- Cabecera ------------------------------------------------------ */
+.cabecera {
+  background: var(--papel);
+  border-bottom: 1px solid var(--borde);
+  position: sticky; top: 0; z-index: 20;
+}
+.cabecera__interior {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding-top: 14px; padding-bottom: 14px; flex-wrap: wrap;
+}
+.marca { display: flex; align-items: center; gap: 12px; }
+.marca__icono { font-size: 30px; line-height: 1; }
+.marca__titulo { margin: 0; font-size: 19px; letter-spacing: -.2px; }
+.marca__sub { margin: 2px 0 0; font-size: 13px; color: var(--tinta-tenue); }
+.insignia {
+  background: var(--verde-suave); color: var(--verde);
+  border: 1px solid rgba(15, 157, 88, .25);
+  padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+}
+
+/* ---------- Tarjetas ------------------------------------------------------ */
+.tarjeta {
+  background: var(--papel);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  padding: 24px;
+  margin: 22px 0;
+}
+.tarjeta__titulo {
+  margin: 0 0 6px; font-size: 17px; display: flex; align-items: center; gap: 10px;
+}
+.tarjeta__nota { margin: 0 0 16px; font-size: 13.5px; color: var(--tinta-media); }
+.paso {
+  display: inline-grid; place-items: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--azul); color: #fff; font-size: 13px; font-weight: 700;
+}
+.subtitulo { font-size: 14.5px; margin: 24px 0 10px; }
+.tarjeta--ayuda summary { cursor: pointer; font-size: 15px; }
+.tarjeta--ayuda ol { margin: 14px 0 8px; padding-left: 22px; }
+.tarjeta--ayuda li { margin-bottom: 6px; }
+
+/* ---------- Pestañas ------------------------------------------------------ */
+.pestanas { display: flex; gap: 6px; margin: 14px 0 18px; border-bottom: 1px solid var(--borde); }
+.pestana {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  padding: 9px 14px; cursor: pointer; font-size: 14px; color: var(--tinta-media);
+  font-family: inherit; border-radius: var(--radio-s) var(--radio-s) 0 0;
+}
+.pestana:hover { background: var(--fondo); }
+.pestana--activa { color: var(--azul); border-bottom-color: var(--azul); font-weight: 600; }
+.panel { display: none; }
+.panel--activo { display: block; }
+
+/* ---------- Zona de arrastre --------------------------------------------- */
+.zona-suelta {
+  border: 2px dashed #c8d2e4; border-radius: var(--radio);
+  padding: 38px 20px; text-align: center; cursor: pointer;
+  transition: border-color .15s, background .15s;
+  background: #fbfcff;
+}
+.zona-suelta:hover, .zona-suelta:focus-visible { border-color: var(--azul); background: var(--azul-suave); outline: none; }
+.zona-suelta--activa { border-color: var(--azul); background: var(--azul-suave); }
+.zona-suelta__icono { font-size: 34px; }
+.zona-suelta__texto { margin: 10px 0 2px; font-size: 15px; }
+.zona-suelta__ayuda { margin: 0; color: var(--tinta-tenue); font-size: 13.5px; }
+.zona-suelta__formatos { margin: 12px 0 0; color: var(--tinta-tenue); font-size: 12.5px; }
+
+.archivo-info {
+  margin-top: 14px; padding: 12px 14px; background: var(--azul-suave);
+  border: 1px solid rgba(11, 95, 255, .18); border-radius: var(--radio-s); font-size: 13.5px;
+}
+
+/* ---------- Formularios --------------------------------------------------- */
+label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--tinta-media); }
+input[type="text"], select, textarea {
+  width: 100%; padding: 9px 11px; font-size: 14px; font-family: inherit;
+  border: 1px solid var(--borde); border-radius: var(--radio-s);
+  background: var(--papel); color: var(--tinta);
+}
+input[type="text"]:focus, select:focus, textarea:focus {
+  outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px rgba(11, 95, 255, .12);
+}
+textarea { resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+.campo { margin-bottom: 16px; }
+.ayuda { font-size: 12.5px; color: var(--tinta-tenue); margin: 6px 0 0; }
+
+.rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 20px; }
+
+.casillas { display: flex; flex-wrap: wrap; gap: 10px 24px; margin: 8px 0 4px; }
+.casilla { display: flex; align-items: center; gap: 8px; font-weight: 500; color: var(--tinta); margin: 0; font-size: 13.5px; }
+.casilla input { width: 16px; height: 16px; accent-color: var(--azul); }
+
+/* ---------- Botones ------------------------------------------------------- */
+.boton {
+  display: inline-flex; align-items: center; gap: 7px; justify-content: center;
+  padding: 9px 16px; border-radius: var(--radio-s); border: 1px solid transparent;
+  font-size: 14px; font-family: inherit; font-weight: 600; cursor: pointer;
+  transition: background .15s, border-color .15s, transform .05s;
+}
+.boton:active { transform: translateY(1px); }
+.boton:disabled { opacity: .5; cursor: not-allowed; }
+.boton--primario { background: var(--azul); color: #fff; }
+.boton--primario:hover:not(:disabled) { background: var(--azul-oscuro); }
+.boton--secundario { background: var(--azul-suave); color: var(--azul-oscuro); border-color: rgba(11, 95, 255, .25); }
+.boton--secundario:hover:not(:disabled) { background: #dbe7ff; }
+.boton--fantasma { background: var(--papel); color: var(--tinta-media); border-color: var(--borde); }
+.boton--fantasma:hover:not(:disabled) { background: var(--fondo); }
+.boton--grande { padding: 12px 22px; font-size: 15px; }
+.fila-botones { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 12px; }
+.fila-botones--principal { margin-top: 20px; }
+
+/* ---------- Mapeo de columnas -------------------------------------------- */
+.mapeo { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-bottom: 8px; }
+.mapeo__item {
+  border: 1px solid var(--borde); border-radius: var(--radio-s);
+  padding: 12px; background: #fbfcff;
+}
+.mapeo__origen { font-weight: 700; font-size: 13.5px; margin-bottom: 2px; word-break: break-word; }
+.mapeo__muestra {
+  font-size: 12px; color: var(--tinta-tenue); margin-bottom: 9px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.mapeo__item select { font-size: 13px; padding: 7px 9px; }
+.mapeo__item--asignado { background: var(--azul-suave); border-color: rgba(11, 95, 255, .3); }
+.plantillas { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--borde); }
+.plantillas .fila-botones { margin-top: 0; }
+.plantillas select { max-width: 260px; }
+
+/* ---------- Tablas -------------------------------------------------------- */
+.tabla-envoltorio {
+  overflow: auto; border: 1px solid var(--borde); border-radius: var(--radio-s);
+  max-height: 420px;
+}
+.tabla { border-collapse: collapse; width: 100%; font-size: 13px; }
+.tabla th, .tabla td {
+  text-align: left; padding: 8px 11px; border-bottom: 1px solid var(--borde);
+  white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis;
+}
+.tabla thead th {
+  background: #f7f9fd; position: sticky; top: 0; font-size: 12px;
+  text-transform: uppercase; letter-spacing: .3px; color: var(--tinta-media); z-index: 1;
+}
+.tabla tbody tr:hover { background: #fafbff; }
+.tabla__etiqueta {
+  display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 4px;
+  background: var(--azul); color: #fff; font-size: 10px; letter-spacing: .2px;
+}
+.celda--mala { background: var(--rojo-suave); color: var(--rojo); }
+.tabla--error td:last-child { color: var(--rojo); }
+
+/* ---------- Estadísticas -------------------------------------------------- */
+.estadisticas { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.estadistica {
+  border: 1px solid var(--borde); border-radius: var(--radio-s);
+  padding: 14px; background: #fbfcff;
+}
+.estadistica__valor { font-size: 24px; font-weight: 700; letter-spacing: -.5px; }
+.estadistica__etiqueta { font-size: 12.5px; color: var(--tinta-tenue); }
+.estadistica--bien .estadistica__valor { color: var(--verde); }
+.estadistica--aviso .estadistica__valor { color: var(--ambar); }
+.estadistica--mal .estadistica__valor { color: var(--rojo); }
+
+/* ---------- Progreso ------------------------------------------------------ */
+.progreso { margin-top: 18px; }
+.progreso__barra { height: 8px; background: var(--borde); border-radius: 99px; overflow: hidden; }
+.progreso__relleno { height: 100%; width: 0; background: var(--azul); transition: width .12s linear; }
+.progreso__texto { margin: 8px 0 0; font-size: 13px; color: var(--tinta-media); }
+
+/* ---------- Alertas ------------------------------------------------------- */
+.alerta { padding: 12px 14px; border-radius: var(--radio-s); font-size: 13.5px; margin-top: 14px; }
+.alerta--error { background: var(--rojo-suave); color: #97231f; border: 1px solid rgba(209, 52, 56, .25); }
+.alerta--aviso { background: var(--ambar-suave); color: #7a4a00; border: 1px solid rgba(178, 107, 0, .25); }
+
+/* ---------- Aviso flotante ------------------------------------------------ */
+.brindis {
+  position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px);
+  background: var(--tinta); color: #fff; padding: 11px 18px; border-radius: 999px;
+  font-size: 13.5px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
+  z-index: 60; box-shadow: 0 8px 24px rgba(0, 0, 0, .2);
+}
+.brindis--visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---------- Pie ----------------------------------------------------------- */
+.pie { padding: 26px 0 40px; text-align: center; color: var(--tinta-tenue); font-size: 12.5px; }
+
+/* ---------- Responsivo ---------------------------------------------------- */
+@media (max-width: 640px) {
+  .tarjeta { padding: 18px; }
+  .cabecera__interior { align-items: flex-start; }
+  .boton { width: 100%; }
+  .fila-botones { flex-direction: column; align-items: stretch; }
+  .plantillas select { max-width: none; }
+}
+
+</style>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📇</text></svg>">
+</head>
+<body>
+
+<header class="cabecera">
+  <div class="contenedor cabecera__interior">
+    <div class="marca">
+      <span class="marca__icono" aria-hidden="true">📇</span>
+      <div>
+        <h1 class="marca__titulo">Contactos&nbsp;→&nbsp;Brevo</h1>
+        <p class="marca__sub">Excel, CSV, TXT, vCard y WhatsApp a CSV listo para importar</p>
+      </div>
+    </div>
+    <div class="insignia" title="Ningún dato sale de tu navegador">
+      🔒 100&nbsp;% local · archivo portátil
+    </div>
+  </div>
+</header>
+
+<main class="contenedor">
+
+  <!-- ===================================================================== -->
+  <!-- PASO 1 · ENTRADA DE DATOS                                              -->
+  <!-- ===================================================================== -->
+  <section class="tarjeta" id="paso-1">
+    <h2 class="tarjeta__titulo"><span class="paso">1</span> Carga tus contactos</h2>
+
+    <div class="pestanas" role="tablist">
+      <button class="pestana pestana--activa" role="tab" data-panel="panel-archivo">📁 Archivo</button>
+      <button class="pestana" role="tab" data-panel="panel-pegar">📋 Pegar texto</button>
+    </div>
+
+    <!-- Panel: archivo -->
+    <div class="panel panel--activo" id="panel-archivo">
+      <div class="zona-suelta" id="zonaSuelta" tabindex="0" role="button"
+           aria-label="Arrastra un archivo aquí o pulsa para seleccionarlo">
+        <div class="zona-suelta__icono">⬇️</div>
+        <p class="zona-suelta__texto"><strong>Arrastra tu archivo aquí</strong></p>
+        <p class="zona-suelta__ayuda">o pulsa para seleccionarlo</p>
+        <p class="zona-suelta__formatos">.xlsx · .xls · .csv · .tsv · .txt · .vcf — máximo <span id="maxMB">50</span> MB</p>
+        <input type="file" id="entradaArchivo" accept=".xlsx,.xls,.xlsm,.csv,.tsv,.txt,.vcf,.vcard" hidden>
+      </div>
+      <div class="archivo-info oculto" id="archivoInfo"></div>
+
+      <!-- Selector de hoja para archivos Excel con varias hojas -->
+      <div class="campo oculto" id="bloqueHojas">
+        <label for="selectorHoja">Hoja del libro de Excel</label>
+        <select id="selectorHoja"></select>
+      </div>
+    </div>
+
+    <!-- Panel: pegar -->
+    <div class="panel" id="panel-pegar">
+      <label for="areaPegado">Pega aquí tu lista de contactos</label>
+      <textarea id="areaPegado" rows="9" spellcheck="false"
+        placeholder="Ana Torres, ana@ejemplo.com, +593 99 123 4567&#10;Luis Pérez; luis@ejemplo.com; 0987654321&#10;&#10;También funciona con una exportación de chat de WhatsApp o con una lista de números sueltos."></textarea>
+      <div class="fila-botones">
+        <button class="boton boton--primario" id="btnAnalizarTexto">Analizar texto pegado</button>
+        <button class="boton boton--fantasma" id="btnLimpiarTexto">Limpiar</button>
+      </div>
+    </div>
+
+    <div class="alerta alerta--error oculto" id="alertaEntrada"></div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PASO 2 · PREVISUALIZACIÓN Y MAPEO                                      -->
+  <!-- ===================================================================== -->
+  <section class="tarjeta oculto" id="paso-2">
+    <h2 class="tarjeta__titulo"><span class="paso">2</span> Revisa y asigna las columnas</h2>
+    <p class="tarjeta__nota" id="notaOrigen"></p>
+
+    <div class="mapeo" id="contenedorMapeo"></div>
+
+    <div class="plantillas">
+      <label for="selectorPlantilla">Plantillas de mapeo</label>
+      <div class="fila-botones">
+        <select id="selectorPlantilla"><option value="">— Ninguna —</option></select>
+        <button class="boton boton--fantasma" id="btnGuardarPlantilla">Guardar actual</button>
+        <button class="boton boton--fantasma" id="btnBorrarPlantilla">Eliminar</button>
+      </div>
+      <p class="ayuda">Las plantillas se guardan solo en este navegador (localStorage).</p>
+    </div>
+
+    <h3 class="subtitulo">Vista previa de los datos detectados <span class="tenue" id="etiquetaFilas"></span></h3>
+    <div class="tabla-envoltorio">
+      <table class="tabla" id="tablaPrevia"></table>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PASO 3 · OPCIONES                                                      -->
+  <!-- ===================================================================== -->
+  <section class="tarjeta oculto" id="paso-3">
+    <h2 class="tarjeta__titulo"><span class="paso">3</span> Opciones de salida</h2>
+
+    <div class="rejilla">
+      <div class="campo">
+        <label for="optPerfil">Plataforma de destino</label>
+        <select id="optPerfil"></select>
+        <p class="ayuda" id="notaPerfil"></p>
+      </div>
+
+      <div class="campo">
+        <label for="optDelimitador">Delimitador</label>
+        <select id="optDelimitador">
+          <option value=";">Punto y coma ( ; ) — recomendado para Brevo</option>
+          <option value=",">Coma ( , )</option>
+          <option value="&#9;">Tabulación</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="optCodificacion">Codificación</label>
+        <select id="optCodificacion">
+          <option value="utf8bom">UTF-8 con BOM — recomendado (Excel y Brevo)</option>
+          <option value="utf8">UTF-8 sin BOM</option>
+          <option value="latin1">ISO-8859-1 (Latin-1)</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="optPais">País por defecto para teléfonos sin prefijo</label>
+        <select id="optPais"></select>
+      </div>
+
+      <div class="campo">
+        <label for="optFormatoTel">Formato del teléfono</label>
+        <select id="optFormatoTel">
+          <option value="e164">+593991234567 (E.164, el más seguro para Brevo)</option>
+          <option value="legible">+593 99 123 4567 (con espacios)</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="optCriterioDup">Detección de duplicados</label>
+        <select id="optCriterioDup">
+          <option value="email">Por email</option>
+          <option value="telefono">Por teléfono</option>
+          <option value="ambos">Por email o teléfono</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="optListaFija">Valor fijo para la columna LISTA</label>
+        <input type="text" id="optListaFija" placeholder="Ej.: CLIENTES">
+      </div>
+
+      <div class="campo">
+        <label for="optEmpresaFija">Valor fijo para la columna EMPRESA</label>
+        <input type="text" id="optEmpresaFija" placeholder="Ej.: Mi Negocio S.A.">
+      </div>
+
+      <div class="campo">
+        <label for="optNombreArchivo">Nombre del archivo</label>
+        <input type="text" id="optNombreArchivo" value="contactos-brevo">
+      </div>
+    </div>
+
+    <div class="casillas">
+      <label class="casilla"><input type="checkbox" id="optDuplicados" checked> Eliminar contactos duplicados</label>
+      <label class="casilla"><input type="checkbox" id="optRequerirEmail" checked> Descartar contactos sin email válido</label>
+      <label class="casilla"><input type="checkbox" id="optCapitalizar" checked> Corregir mayúsculas de los nombres</label>
+      <label class="casilla"><input type="checkbox" id="optDividirNombre" checked> Dividir nombre completo en nombre y apellido</label>
+      <label class="casilla"><input type="checkbox" id="optOmitirVacias"> Omitir columnas totalmente vacías</label>
+    </div>
+
+    <div class="fila-botones fila-botones--principal">
+      <button class="boton boton--primario boton--grande" id="btnProcesar">⚙️ Generar CSV</button>
+      <button class="boton boton--fantasma" id="btnReiniciar">Empezar de nuevo</button>
+    </div>
+
+    <div class="progreso oculto" id="bloqueProgreso">
+      <div class="progreso__barra"><div class="progreso__relleno" id="progresoRelleno"></div></div>
+      <p class="progreso__texto" id="progresoTexto">Procesando…</p>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PASO 4 · RESULTADO                                                     -->
+  <!-- ===================================================================== -->
+  <section class="tarjeta oculto" id="paso-4">
+    <h2 class="tarjeta__titulo"><span class="paso">4</span> Resultado</h2>
+
+    <div class="estadisticas" id="estadisticas"></div>
+
+    <div class="alerta alerta--aviso oculto" id="alertaLimite"></div>
+
+    <div class="fila-botones fila-botones--principal">
+      <button class="boton boton--primario boton--grande" id="btnDescargar">⬇️ Descargar CSV</button>
+      <button class="boton boton--secundario" id="btnCopiar">📋 Copiar al portapapeles</button>
+      <button class="boton boton--fantasma" id="btnVerErrores">Ver contactos descartados</button>
+    </div>
+
+    <h3 class="subtitulo">Vista previa del CSV final</h3>
+    <div class="tabla-envoltorio">
+      <table class="tabla" id="tablaResultado"></table>
+    </div>
+
+    <div class="oculto" id="bloqueErrores">
+      <h3 class="subtitulo">Contactos descartados <span class="tenue" id="etiquetaErrores"></span></h3>
+      <div class="tabla-envoltorio">
+        <table class="tabla tabla--error" id="tablaErrores"></table>
+      </div>
+      <button class="boton boton--fantasma" id="btnDescargarErrores">Descargar descartados (CSV)</button>
+    </div>
+  </section>
+
+  <details class="tarjeta tarjeta--ayuda">
+    <summary><strong>¿Cómo importo el archivo en Brevo?</strong></summary>
+    <ol>
+      <li>Entra en Brevo → <em>Contactos</em> → <em>Importar contactos</em>.</li>
+      <li>Sube el archivo <code>.csv</code> generado aquí.</li>
+      <li>En «Separador de columna» elige el mismo delimitador que usaste (por defecto <code>;</code>).</li>
+      <li>Empareja <code>EMAIL</code> con el atributo email y el resto de columnas con sus atributos (créalos en <em>Contactos → Configuración → Atributos</em> si no existen).</li>
+      <li>Marca la lista de destino y confirma que tienes consentimiento de los contactos.</li>
+    </ol>
+    <p class="ayuda">Brevo admite hasta 100.000 contactos por archivo. Si superas ese número, divide el archivo.</p>
+  </details>
+
+</main>
+
+<footer class="pie">
+  <div class="contenedor">
+    <p>Todo el procesamiento ocurre en tu navegador. Ningún contacto se sube a Internet.</p>
+  </div>
+</footer>
+
+<div class="brindis" id="brindis" role="status" aria-live="polite"></div>
+
+<!-- ======================= Librerías ======================= -->
+<!-- SheetJS (lectura de Excel). Se intenta primero una copia local y, si no
+     existe, se descarga desde el CDN. Si no hay Internet, el resto de formatos
+     sigue funcionando con normalidad. -->
+<script src="js/lib/xlsx.full.min.js" onerror="window.__sinXLSXLocal=true"></script>
+<script>
+  if (typeof XLSX === 'undefined') {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onerror = function () { window.__sinXLSX = true; };
+    document.head.appendChild(s);
+  }
+</script>
+
+<!-- ======================= Núcleo ======================= -->
+
+<script>window.__ARCHIVO_UNICO__ = true;</script>
+<script>
+/* ======== js/nucleo/paises.js ======== */
+/**
+ * paises.js
+ * -----------------------------------------------------------------------------
+ * Catálogo de prefijos telefónicos internacionales.
+ *
+ * Cada país define:
+ *   - codigo:  prefijo internacional SIN el signo "+" (ej. "593")
+ *   - iso:     código ISO-3166 alfa-2 (ej. "EC")
+ *   - nombre:  nombre en español
+ *   - min/max: longitud mínima y máxima del número NACIONAL (sin prefijo país)
+ *   - grupos:  cómo agrupar visualmente el número nacional según su longitud
+ *              (ej. { 9: [2, 3, 4] } => "99 123 4567")
+ *
+ * NOTA: este archivo se carga tanto en el navegador (window) como dentro del
+ * Web Worker (self) y en Node.js (module.exports) para las pruebas.
+ * -----------------------------------------------------------------------------
+ */
+(function (global) {
+  'use strict';
+
+  var PAISES = [
+    // --- América Latina -------------------------------------------------------
+    { codigo: '54',  iso: 'AR', nombre: 'Argentina',        min: 10, max: 11, grupos: { 10: [2, 4, 4], 11: [3, 4, 4] } },
+    { codigo: '591', iso: 'BO', nombre: 'Bolivia',          min: 8,  max: 8,  grupos: { 8: [4, 4] } },
+    { codigo: '55',  iso: 'BR', nombre: 'Brasil',           min: 10, max: 11, grupos: { 10: [2, 4, 4], 11: [2, 5, 4] } },
+    { codigo: '56',  iso: 'CL', nombre: 'Chile',            min: 9,  max: 9,  grupos: { 9: [1, 4, 4] } },
+    { codigo: '57',  iso: 'CO', nombre: 'Colombia',         min: 10, max: 10, grupos: { 10: [3, 3, 4] } },
+    { codigo: '506', iso: 'CR', nombre: 'Costa Rica',       min: 8,  max: 8,  grupos: { 8: [4, 4] } },
+    { codigo: '53',  iso: 'CU', nombre: 'Cuba',             min: 8,  max: 8,  grupos: { 8: [4, 4] } },
+    { codigo: '593', iso: 'EC', nombre: 'Ecuador',          min: 8,  max: 9,  grupos: { 9: [2, 3, 4], 8: [1, 3, 4] } },
+    { codigo: '503', iso: 'SV', nombre: 'El Salvador',      min: 8,  max: 8,  grupos: { 8: [4, 4] } },
+    { codigo: '502', iso: 'GT', nombre: 'Guatemala',        min: 8,  max: 8,  grupos: { 8: [4, 4] } },
+    { codigo: '504', iso: 'HN', nombre: 'Honduras',         min: 8,  max: 8,  grupos: { 8: [4, 4] } },
+    { codigo: '52',  iso: 'MX', nombre: 'México',           min: 10, max: 10, grupos: { 10: [2, 4, 4] } },
+    { codigo: '505', iso: 'NI', nombre: 'Nicaragua',        min: 8,  max: 8,  grupos: { 8: [4, 4] } },
+    { codigo: '507', iso: 'PA', nombre: 'Panamá',           min: 7,  max: 8,  grupos: { 8: [4, 4], 7: [3, 4] } },
+    { codigo: '595', iso: 'PY', nombre: 'Paraguay',         min: 9,  max: 9,  grupos: { 9: [3, 3, 3] } },
+    { codigo: '51',  iso: 'PE', nombre: 'Perú',             min: 8,  max: 9,  grupos: { 9: [3, 3, 3], 8: [4, 4] } },
+    { codigo: '1',   iso: 'DO', nombre: 'República Dominicana', min: 10, max: 10, grupos: { 10: [3, 3, 4] } },
+    { codigo: '598', iso: 'UY', nombre: 'Uruguay',          min: 8,  max: 9,  grupos: { 9: [2, 3, 4], 8: [4, 4] } },
+    { codigo: '58',  iso: 'VE', nombre: 'Venezuela',        min: 10, max: 10, grupos: { 10: [3, 3, 4] } },
+
+    // --- Norteamérica ---------------------------------------------------------
+    { codigo: '1',   iso: 'US', nombre: 'Estados Unidos / Canadá', min: 10, max: 10, grupos: { 10: [3, 3, 4] } },
+
+    // --- Europa ---------------------------------------------------------------
+    { codigo: '34',  iso: 'ES', nombre: 'España',           min: 9,  max: 9,  grupos: { 9: [3, 3, 3] } },
+    { codigo: '351', iso: 'PT', nombre: 'Portugal',         min: 9,  max: 9,  grupos: { 9: [3, 3, 3] } },
+    { codigo: '33',  iso: 'FR', nombre: 'Francia',          min: 9,  max: 9,  grupos: { 9: [1, 2, 2, 2, 2] } },
+    { codigo: '39',  iso: 'IT', nombre: 'Italia',           min: 9,  max: 10, grupos: { 10: [3, 3, 4], 9: [3, 3, 3] } },
+    { codigo: '49',  iso: 'DE', nombre: 'Alemania',         min: 9,  max: 11, grupos: {} },
+    { codigo: '44',  iso: 'GB', nombre: 'Reino Unido',      min: 9,  max: 10, grupos: { 10: [4, 6] } },
+    { codigo: '41',  iso: 'CH', nombre: 'Suiza',            min: 9,  max: 9,  grupos: { 9: [2, 3, 2, 2] } },
+    { codigo: '31',  iso: 'NL', nombre: 'Países Bajos',     min: 9,  max: 9,  grupos: { 9: [1, 4, 4] } },
+    { codigo: '32',  iso: 'BE', nombre: 'Bélgica',          min: 8,  max: 9,  grupos: {} },
+    { codigo: '43',  iso: 'AT', nombre: 'Austria',          min: 9,  max: 11, grupos: {} },
+    { codigo: '46',  iso: 'SE', nombre: 'Suecia',           min: 8,  max: 9,  grupos: {} },
+    { codigo: '47',  iso: 'NO', nombre: 'Noruega',          min: 8,  max: 8,  grupos: { 8: [4, 4] } },
+    { codigo: '45',  iso: 'DK', nombre: 'Dinamarca',        min: 8,  max: 8,  grupos: { 8: [4, 4] } },
+    { codigo: '353', iso: 'IE', nombre: 'Irlanda',          min: 9,  max: 9,  grupos: { 9: [2, 3, 4] } },
+    { codigo: '48',  iso: 'PL', nombre: 'Polonia',          min: 9,  max: 9,  grupos: { 9: [3, 3, 3] } },
+    { codigo: '30',  iso: 'GR', nombre: 'Grecia',           min: 10, max: 10, grupos: { 10: [3, 3, 4] } },
+    { codigo: '380', iso: 'UA', nombre: 'Ucrania',          min: 9,  max: 9,  grupos: { 9: [2, 3, 4] } },
+    { codigo: '7',   iso: 'RU', nombre: 'Rusia / Kazajistán', min: 10, max: 10, grupos: { 10: [3, 3, 4] } },
+
+    // --- Resto del mundo ------------------------------------------------------
+    { codigo: '212', iso: 'MA', nombre: 'Marruecos',        min: 9,  max: 9,  grupos: { 9: [3, 3, 3] } },
+    { codigo: '27',  iso: 'ZA', nombre: 'Sudáfrica',        min: 9,  max: 9,  grupos: { 9: [2, 3, 4] } },
+    { codigo: '20',  iso: 'EG', nombre: 'Egipto',           min: 9,  max: 10, grupos: {} },
+    { codigo: '972', iso: 'IL', nombre: 'Israel',           min: 9,  max: 9,  grupos: { 9: [2, 3, 4] } },
+    { codigo: '971', iso: 'AE', nombre: 'Emiratos Árabes Unidos', min: 9, max: 9, grupos: { 9: [2, 3, 4] } },
+    { codigo: '91',  iso: 'IN', nombre: 'India',            min: 10, max: 10, grupos: { 10: [5, 5] } },
+    { codigo: '86',  iso: 'CN', nombre: 'China',            min: 11, max: 11, grupos: { 11: [3, 4, 4] } },
+    { codigo: '81',  iso: 'JP', nombre: 'Japón',            min: 9,  max: 10, grupos: {} },
+    { codigo: '82',  iso: 'KR', nombre: 'Corea del Sur',    min: 9,  max: 10, grupos: {} },
+    { codigo: '61',  iso: 'AU', nombre: 'Australia',        min: 9,  max: 9,  grupos: { 9: [3, 3, 3] } },
+    { codigo: '64',  iso: 'NZ', nombre: 'Nueva Zelanda',    min: 8,  max: 9,  grupos: {} },
+    { codigo: '63',  iso: 'PH', nombre: 'Filipinas',        min: 10, max: 10, grupos: { 10: [3, 3, 4] } }
+  ];
+
+  /**
+   * Índice de prefijos ordenado de MÁS largo a MÁS corto.
+   * Es imprescindible para que "593" gane frente a "59" o "5".
+   */
+  var PREFIJOS_ORDENADOS = PAISES
+    .slice()
+    .sort(function (a, b) { return b.codigo.length - a.codigo.length; });
+
+  /** Devuelve el país cuyo prefijo coincide con el inicio de los dígitos dados. */
+  function buscarPorPrefijo(digitos) {
+    for (var i = 0; i < PREFIJOS_ORDENADOS.length; i++) {
+      var p = PREFIJOS_ORDENADOS[i];
+      if (digitos.indexOf(p.codigo) === 0) {
+        // Validamos que la longitud restante sea plausible para ese país
+        var nacional = digitos.slice(p.codigo.length);
+        if (nacional.length >= p.min - 1 && nacional.length <= p.max + 1) return p;
+      }
+    }
+    // Segunda pasada: sin validar longitud (mejor un prefijo que ninguno)
+    for (var j = 0; j < PREFIJOS_ORDENADOS.length; j++) {
+      if (digitos.indexOf(PREFIJOS_ORDENADOS[j].codigo) === 0) return PREFIJOS_ORDENADOS[j];
+    }
+    return null;
+  }
+
+  /** Busca un país por su código ISO alfa-2. */
+  function buscarPorIso(iso) {
+    for (var i = 0; i < PAISES.length; i++) {
+      if (PAISES[i].iso === iso) return PAISES[i];
+    }
+    return null;
+  }
+
+  var API = {
+    PAISES: PAISES,
+    buscarPorPrefijo: buscarPorPrefijo,
+    buscarPorIso: buscarPorIso
+  };
+
+  // Exportación universal (navegador / worker / Node)
+  global.CB = global.CB || {};
+  global.CB.paises = API;
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+
+})(typeof self !== 'undefined' ? self : this);
+
+
+/* ======== js/nucleo/telefono.js ======== */
+/**
+ * telefono.js
+ * -----------------------------------------------------------------------------
+ * Normalización y validación de números de teléfono a formato internacional.
+ *
+ * Estrategia:
+ *   1. Se limpian todos los caracteres que no sean dígitos (se recuerda si
+ *      el número empezaba por "+" o por "00", que indican formato internacional).
+ *   2. Si el número YA es internacional, se detecta el país por prefijo.
+ *   3. Si NO lo es, se elimina el prefijo troncal nacional (ceros iniciales)
+ *      y se antepone el código del país por defecto elegido por el usuario.
+ *   4. Se valida la longitud y se formatea con espacios según el país.
+ *
+ * Salida:
+ *   { ok, e164, formateado, pais, motivo }
+ *     - e164:       "+593991234567"  (lo que acepta Brevo sin problemas)
+ *     - formateado: "+593 99 123 4567" (legible para humanos)
+ * -----------------------------------------------------------------------------
+ */
+(function (global) {
+  'use strict';
+
+  var paises = (global.CB && global.CB.paises)
+    ? global.CB.paises
+    : (typeof require !== 'undefined' ? require('./paises.js') : null);
+
+  /** Quita todo lo que no sea dígito. */
+  function soloDigitos(txt) {
+    return String(txt).replace(/[^\d]/g, '');
+  }
+
+  /** Agrupa una cadena de dígitos según un patrón [2,3,4] -> "99 123 4567". */
+  function agrupar(digitos, patron) {
+    var partes = [];
+    var pos = 0;
+    for (var i = 0; i < patron.length; i++) {
+      partes.push(digitos.substr(pos, patron[i]));
+      pos += patron[i];
+    }
+    if (pos < digitos.length) partes.push(digitos.slice(pos)); // sobrante
+    return partes.filter(Boolean).join(' ');
+  }
+
+  /** Patrón de agrupación genérico cuando el país no define uno propio. */
+  function patronGenerico(largo) {
+    switch (largo) {
+      case 6:  return [3, 3];
+      case 7:  return [3, 4];
+      case 8:  return [4, 4];
+      case 9:  return [2, 3, 4];
+      case 10: return [3, 3, 4];
+      case 11: return [2, 3, 3, 3];
+      case 12: return [3, 3, 3, 3];
+      default: return [largo];
+    }
+  }
+
+  /**
+   * Normaliza un teléfono.
+   * @param {string} valor        Texto tal cual viene del archivo.
+   * @param {string} isoPorDefecto Código ISO del país por defecto (ej. "EC").
+   * @returns {{ok:boolean, e164:string, formateado:string, pais:object|null, motivo:string}}
+   */
+  function normalizar(valor, isoPorDefecto) {
+    var vacio = { ok: false, e164: '', formateado: '', pais: null, motivo: '' };
+    if (valor === null || valor === undefined) return vacio;
+
+    var texto = String(valor).trim();
+    if (!texto) return vacio;
+
+    // Algunas exportaciones traen varios números separados por "/" o ";" -> tomamos el primero
+    texto = texto.split(/[;\/]|(?:\s{2,})/)[0].trim();
+
+    // ¿Venía ya en formato internacional?
+    var esInternacional = /^\s*\+/.test(texto) || /^\s*00\d/.test(texto);
+
+    var digitos = soloDigitos(texto);
+    if (!digitos) {
+      return { ok: false, e164: '', formateado: '', pais: null, motivo: 'Sin dígitos' };
+    }
+
+    // "00" al inicio equivale a "+"
+    if (!/^\s*\+/.test(texto) && digitos.indexOf('00') === 0) {
+      digitos = digitos.replace(/^00+/, '');
+      esInternacional = true;
+    }
+
+    var pais = null;
+    var nacional = '';
+
+    if (esInternacional) {
+      pais = paises.buscarPorPrefijo(digitos);
+      if (pais) {
+        nacional = digitos.slice(pais.codigo.length);
+      } else {
+        // Prefijo desconocido: lo aceptamos si la longitud es plausible
+        if (digitos.length >= 8 && digitos.length <= 15) {
+          return {
+            ok: true,
+            e164: '+' + digitos,
+            formateado: '+' + agrupar(digitos, patronGenerico(digitos.length)),
+            pais: null,
+            motivo: 'Prefijo de país no reconocido (se conserva tal cual)'
+          };
+        }
+        return { ok: false, e164: '', formateado: '', pais: null, motivo: 'Longitud inválida' };
+      }
+    } else {
+      pais = paises.buscarPorIso(isoPorDefecto || 'EC');
+      if (!pais) pais = paises.buscarPorIso('EC');
+      nacional = digitos;
+
+      // Caso frecuente: el número nacional ya trae el código de país delante
+      // pero sin "+" (ej. "593991234567"). Lo detectamos por longitud.
+      if (nacional.indexOf(pais.codigo) === 0 &&
+          nacional.length - pais.codigo.length >= pais.min &&
+          nacional.length - pais.codigo.length <= pais.max) {
+        nacional = nacional.slice(pais.codigo.length);
+      }
+
+      // Prefijo troncal nacional: en casi toda Latinoamérica y Europa es "0"
+      nacional = nacional.replace(/^0+/, '');
+    }
+
+    // Validación de longitud del número nacional
+    var min = pais && pais.min ? pais.min : 6;
+    var max = pais && pais.max ? pais.max : 14;
+    if (nacional.length < min || nacional.length > max) {
+      return {
+        ok: false,
+        e164: '',
+        formateado: '',
+        pais: pais,
+        motivo: 'Longitud inválida para ' + (pais ? pais.nombre : 'el país') +
+                ' (' + nacional.length + ' dígitos, se esperaban entre ' + min + ' y ' + max + ')'
+      };
+    }
+
+    var patron = (pais.grupos && pais.grupos[nacional.length])
+      ? pais.grupos[nacional.length]
+      : patronGenerico(nacional.length);
+
+    return {
+      ok: true,
+      e164: '+' + pais.codigo + nacional,
+      formateado: '+' + pais.codigo + ' ' + agrupar(nacional, patron),
+      pais: pais,
+      motivo: ''
+    };
+  }
+
+  /** Comprobación rápida: ¿este texto "parece" un teléfono? (usado por el detector) */
+  function pareceTelefono(texto) {
+    if (texto === null || texto === undefined) return false;
+    var t = String(texto).trim();
+    if (!t) return false;
+    if (t.indexOf('@') !== -1) return false;              // es un email
+    if (!/^[\d\s()+.\-]+$/.test(t)) return false;          // caracteres no telefónicos
+    var d = soloDigitos(t);
+    return d.length >= 7 && d.length <= 15;
+  }
+
+  var API = {
+    normalizar: normalizar,
+    pareceTelefono: pareceTelefono,
+    soloDigitos: soloDigitos
+  };
+
+  global.CB = global.CB || {};
+  global.CB.telefono = API;
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+
+})(typeof self !== 'undefined' ? self : this);
+
+
+/* ======== js/nucleo/validacion.js ======== */
+/**
+ * validacion.js
+ * -----------------------------------------------------------------------------
+ * Validación y limpieza de emails y nombres.
+ * -----------------------------------------------------------------------------
+ */
+(function (global) {
+  'use strict';
+
+  // Expresión razonable para uso real (no pretende cubrir el RFC 5322 completo)
+  var RE_EMAIL = /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i;
+
+  // Email dentro de un texto libre (para listas pegadas o exportaciones sucias)
+  var RE_EMAIL_EN_TEXTO = /[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}/ig;
+
+  // Caracteres invisibles que ensucian los pegados desde Word/Excel/web
+  var RE_INVISIBLES = /[​-‍﻿ ]/g;
+
+  // Dominios mal escritos frecuentes -> corrección sugerida
+  var CORRECCIONES_DOMINIO = {
+    'gmial.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmail.co': 'gmail.com',
+    'gmail.con': 'gmail.com', 'gmail.cm': 'gmail.com', 'gnail.com': 'gmail.com',
+    'hotmial.com': 'hotmail.com', 'hotmail.con': 'hotmail.com', 'hotmail.co': 'hotmail.com',
+    'outlok.com': 'outlook.com', 'outloo.com': 'outlook.com',
+    'yaho.com': 'yahoo.com', 'yahooo.com': 'yahoo.com', 'yahoo.con': 'yahoo.com'
+  };
+
+  /**
+   * Limpia y valida un email.
+   * @returns {{ok:boolean, email:string, motivo:string, sugerencia:string}}
+   */
+  function normalizarEmail(valor) {
+    if (valor === null || valor === undefined) {
+      return { ok: false, email: '', motivo: 'Vacío', sugerencia: '' };
+    }
+    var e = String(valor).trim().toLowerCase();
+
+    // Quitar formatos tipo "Juan Pérez <juan@dominio.com>" o mailto:
+    e = e.replace(/^mailto:/, '');
+    var m = e.match(/<([^>]+)>/);
+    if (m) e = m[1].trim();
+
+    // Quitar comillas, espacios internos y caracteres invisibles
+    e = e.replace(/^["'\s]+|["'\s,;]+$/g, '').replace(/\s+/g, '').replace(RE_INVISIBLES, '');
+
+    if (!e) return { ok: false, email: '', motivo: 'Vacío', sugerencia: '' };
+
+    if (!RE_EMAIL.test(e)) {
+      var motivo = e.indexOf('@') === -1 ? 'Falta el símbolo @' : 'Formato de email inválido';
+      return { ok: false, email: e, motivo: motivo, sugerencia: '' };
+    }
+
+    // Sugerencia de dominio corregido (no se aplica automáticamente)
+    var partes = e.split('@');
+    var dominio = partes[1];
+    var sugerencia = CORRECCIONES_DOMINIO[dominio]
+      ? partes[0] + '@' + CORRECCIONES_DOMINIO[dominio]
+      : '';
+
+    return { ok: true, email: e, motivo: '', sugerencia: sugerencia };
+  }
+
+  /** Extrae todos los emails presentes en un texto libre. */
+  function extraerEmails(texto) {
+    var encontrados = String(texto).match(RE_EMAIL_EN_TEXTO);
+    return encontrados ? encontrados.map(function (x) { return x.toLowerCase(); }) : [];
+  }
+
+  /** ¿Este valor parece un email? (para el detector de columnas) */
+  function pareceEmail(texto) {
+    if (!texto) return false;
+    return RE_EMAIL.test(String(texto).trim().toLowerCase());
+  }
+
+  /** Capitaliza correctamente un nombre: "juan de la CRUZ" -> "Juan de la Cruz". */
+  var MINUSCULAS = ['de', 'del', 'la', 'las', 'los', 'y', 'da', 'do', 'dos', 'van', 'von', 'di', 'el'];
+  function capitalizarNombre(txt) {
+    if (!txt) return '';
+    return String(txt).trim().toLowerCase().split(/\s+/).map(function (p, i) {
+      if (i > 0 && MINUSCULAS.indexOf(p) !== -1) return p;
+      // Respeta guiones y apóstrofes: "jean-luc" -> "Jean-Luc"
+      return p.replace(/(^|[-'’])([a-záéíóúñüç])/g, function (_, sep, letra) {
+        return sep + letra.toUpperCase();
+      });
+    }).join(' ');
+  }
+
+  /** Limpia un texto genérico: recorta espacios y colapsa espacios múltiples. */
+  function limpiarTexto(txt) {
+    if (txt === null || txt === undefined) return '';
+    return String(txt)
+      .replace(RE_INVISIBLES, ' ')  // caracteres invisibles
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /**
+   * Separa un nombre completo en NOMBRE y APELLIDO.
+   * Reglas:
+   *   - "Pérez García, Juan Carlos"  -> nombre: "Juan Carlos", apellido: "Pérez García"
+   *   - "Juan Carlos Pérez García"   -> nombre: "Juan Carlos", apellido: "Pérez García"
+   *   - "Juan Pérez"                 -> nombre: "Juan",        apellido: "Pérez"
+   *   - "Juan"                       -> nombre: "Juan",        apellido: ""
+   */
+  function separarNombre(completo) {
+    var t = limpiarTexto(completo);
+    if (!t) return { nombre: '', apellido: '' };
+
+    // Formato "Apellidos, Nombres"
+    if (t.indexOf(',') !== -1) {
+      var trozos = t.split(',');
+      return {
+        nombre: capitalizarNombre(limpiarTexto(trozos.slice(1).join(' '))),
+        apellido: capitalizarNombre(limpiarTexto(trozos[0]))
+      };
+    }
+
+    var palabras = t.split(' ');
+    if (palabras.length === 1) return { nombre: capitalizarNombre(palabras[0]), apellido: '' };
+    if (palabras.length === 2) {
+      return { nombre: capitalizarNombre(palabras[0]), apellido: capitalizarNombre(palabras[1]) };
+    }
+    if (palabras.length === 3) {
+      // Convención hispana: 1 nombre + 2 apellidos
+      return {
+        nombre: capitalizarNombre(palabras[0]),
+        apellido: capitalizarNombre(palabras.slice(1).join(' '))
+      };
+    }
+    // 4+ palabras: 2 nombres + resto apellidos
+    return {
+      nombre: capitalizarNombre(palabras.slice(0, 2).join(' ')),
+      apellido: capitalizarNombre(palabras.slice(2).join(' '))
+    };
+  }
+
+  /** ¿Parece un nombre de persona? (para el detector de columnas) */
+  function pareceNombre(texto) {
+    if (!texto) return false;
+    var t = String(texto).trim();
+    if (t.length < 2 || t.length > 60) return false;
+    if (t.indexOf('@') !== -1) return false;
+    // Debe ser mayoritariamente letras (permite acentos, espacios, guiones, puntos)
+    return /^[\p{L}][\p{L}\s.\-'’]*$/u.test(t) && /\p{L}{2,}/u.test(t);
+  }
+
+  var API = {
+    RE_EMAIL: RE_EMAIL,
+    normalizarEmail: normalizarEmail,
+    extraerEmails: extraerEmails,
+    pareceEmail: pareceEmail,
+    pareceNombre: pareceNombre,
+    capitalizarNombre: capitalizarNombre,
+    limpiarTexto: limpiarTexto,
+    separarNombre: separarNombre
+  };
+
+  global.CB = global.CB || {};
+  global.CB.validacion = API;
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+
+})(typeof self !== 'undefined' ? self : this);
+
+
+/* ======== js/nucleo/parsers.js ======== */
+/**
+ * parsers.js
+ * -----------------------------------------------------------------------------
+ * Lectores de los distintos formatos de entrada. TODOS devuelven la misma
+ * estructura ("tabla") para que el resto de la aplicación no tenga que saber
+ * de dónde vienen los datos:
+ *
+ *   {
+ *     encabezados: ['Nombre', 'Correo', ...],   // nombres de columna
+ *     filas:       [['Ana', 'ana@x.com'], ...], // matriz de valores
+ *     origen:      'csv' | 'excel' | 'vcf' | 'whatsapp' | 'texto',
+ *     aviso:       'texto informativo opcional'
+ *   }
+ * -----------------------------------------------------------------------------
+ */
+(function (global) {
+  'use strict';
+
+  var validacion = (global.CB && global.CB.validacion)
+    ? global.CB.validacion
+    : (typeof require !== 'undefined' ? require('./validacion.js') : null);
+  var telefono = (global.CB && global.CB.telefono)
+    ? global.CB.telefono
+    : (typeof require !== 'undefined' ? require('./telefono.js') : null);
+
+  // ===========================================================================
+  // 1. CSV / TSV  (analizador propio, soporta comillas dobles y saltos de línea)
+  // ===========================================================================
+
+  /** Detecta el delimitador más probable analizando las primeras líneas. */
+  function detectarDelimitador(texto) {
+    var muestra = texto.split(/\r?\n/).slice(0, 20).join('\n');
+    var candidatos = ['\t', ';', ',', '|'];
+    var mejor = ',';
+    var mejorPuntaje = -1;
+
+    candidatos.forEach(function (d) {
+      // Contamos ocurrencias FUERA de comillas
+      var dentro = false, cuenta = 0;
+      for (var i = 0; i < muestra.length; i++) {
+        var c = muestra[i];
+        if (c === '"') dentro = !dentro;
+        else if (c === d && !dentro) cuenta++;
+      }
+      if (cuenta > mejorPuntaje) { mejorPuntaje = cuenta; mejor = d; }
+    });
+    return mejorPuntaje > 0 ? mejor : ',';
+  }
+
+  /**
+   * Analiza un texto CSV completo respetando comillas.
+   * @returns {Array<Array<string>>} matriz de celdas
+   */
+  function analizarCSV(texto, delimitador) {
+    var filas = [];
+    var fila = [];
+    var celda = '';
+    var dentroComillas = false;
+    var i = 0;
+    var n = texto.length;
+
+    // Quitar BOM si existe
+    if (texto.charCodeAt(0) === 0xFEFF) { i = 1; }
+
+    while (i < n) {
+      var c = texto[i];
+
+      if (dentroComillas) {
+        if (c === '"') {
+          if (texto[i + 1] === '"') { celda += '"'; i += 2; continue; } // comilla escapada
+          dentroComillas = false; i++; continue;
+        }
+        celda += c; i++; continue;
+      }
+
+      if (c === '"') { dentroComillas = true; i++; continue; }
+
+      if (c === delimitador) { fila.push(celda); celda = ''; i++; continue; }
+
+      if (c === '\r') { i++; continue; }
+
+      if (c === '\n') {
+        fila.push(celda); filas.push(fila);
+        fila = []; celda = ''; i++; continue;
+      }
+
+      celda += c; i++;
+    }
+
+    // Última celda / fila pendiente
+    if (celda !== '' || fila.length > 0) { fila.push(celda); filas.push(fila); }
+
+    // Eliminar filas totalmente vacías
+    return filas.filter(function (f) {
+      return f.some(function (v) { return String(v).trim() !== ''; });
+    });
+  }
+
+  /**
+   * Decide si la primera fila es un encabezado.
+   * Heurística: si NINGUNA celda de la primera fila es un email/teléfono válido
+   * pero SÍ las hay en las siguientes filas, es un encabezado.
+   */
+  function pareceEncabezado(filas) {
+    if (!filas.length) return false;
+    var primera = filas[0];
+
+    var datosEnPrimera = primera.some(function (v) {
+      return validacion.pareceEmail(v) || telefono.pareceTelefono(v);
+    });
+    if (datosEnPrimera) return false;
+
+    // Palabras típicas de encabezado
+    var claves = /(email|correo|e-?mail|mail|nombre|name|apellido|surname|tel|phone|celular|movil|móvil|empresa|company|lista|list|contacto)/i;
+    if (primera.some(function (v) { return claves.test(String(v)); })) return true;
+
+    // Si hay más filas y en ellas sí hay datos reconocibles -> la 1ª es encabezado
+    var siguientes = filas.slice(1, 15);
+    var datosDespues = siguientes.some(function (f) {
+      return f.some(function (v) {
+        return validacion.pareceEmail(v) || telefono.pareceTelefono(v);
+      });
+    });
+    return datosDespues;
+  }
+
+  /** Convierte una matriz en la estructura "tabla". */
+  function matrizATabla(matriz, origen, aviso) {
+    if (!matriz.length) return { encabezados: [], filas: [], origen: origen, aviso: 'El archivo no contiene datos.' };
+
+    var conEncabezado = pareceEncabezado(matriz);
+    var encabezados, filas;
+
+    if (conEncabezado) {
+      encabezados = matriz[0].map(function (h, i) {
+        var t = validacion.limpiarTexto(h);
+        return t || ('Columna ' + (i + 1));
+      });
+      filas = matriz.slice(1);
+    } else {
+      var ancho = matriz.reduce(function (m, f) { return Math.max(m, f.length); }, 0);
+      encabezados = [];
+      for (var i = 0; i < ancho; i++) encabezados.push('Columna ' + (i + 1));
+      filas = matriz;
+    }
+
+    // Normalizar el ancho de todas las filas
+    filas = filas.map(function (f) {
+      var copia = f.slice(0, encabezados.length);
+      while (copia.length < encabezados.length) copia.push('');
+      return copia;
+    });
+
+    return { encabezados: encabezados, filas: filas, origen: origen, aviso: aviso || '' };
+  }
+
+  function parsearCSV(texto, delimitador) {
+    var d = delimitador || detectarDelimitador(texto);
+    var matriz = analizarCSV(texto, d);
+    var nombre = d === '\t' ? 'tabulaciones' : ('"' + d + '"');
+    return matrizATabla(matriz, 'csv', 'Delimitador detectado: ' + nombre + '.');
+  }
+
+  // ===========================================================================
+  // 2. vCard (.vcf)  — exportaciones de contactos de Android / iPhone / WhatsApp
+  // ===========================================================================
+
+  /** Decodifica texto Quoted-Printable (habitual en .vcf de Android). */
+  function decodificarQP(txt) {
+    var limpio = txt.replace(/=\r?\n/g, '');
+    var bytes = [];
+    for (var i = 0; i < limpio.length; i++) {
+      if (limpio[i] === '=' && /[0-9A-F]{2}/i.test(limpio.substr(i + 1, 2))) {
+        bytes.push(parseInt(limpio.substr(i + 1, 2), 16));
+        i += 2;
+      } else {
+        bytes.push(limpio.charCodeAt(i));
+      }
+    }
+    try {
+      if (typeof TextDecoder !== 'undefined') {
+        return new TextDecoder('utf-8').decode(new Uint8Array(bytes));
+      }
+      if (typeof Buffer !== 'undefined') return Buffer.from(bytes).toString('utf8');
+    } catch (e) { /* si falla, devolvemos el texto plano */ }
+    return limpio;
+  }
+
+  function parsearVCF(texto) {
+    // "Desdoblar" líneas continuadas (empiezan con espacio o tabulación)
+    var plano = texto.replace(/\r\n/g, '\n').replace(/\n[ \t]/g, '');
+    var bloques = plano.split(/BEGIN:VCARD/i).slice(1);
+
+    var filas = [];
+    bloques.forEach(function (bloque) {
+      var lineas = bloque.split('\n');
+      var c = { nombre: '', apellido: '', completo: '', tels: [], emails: [], empresa: '' };
+
+      lineas.forEach(function (linea) {
+        var sep = linea.indexOf(':');
+        if (sep === -1) return;
+        var clave = linea.slice(0, sep);
+        var valor = linea.slice(sep + 1).trim();
+        if (!valor) return;
+
+        var partesClave = clave.toUpperCase().split(';');
+        var prop = partesClave[0].replace(/^ITEM\d+\./, '');
+
+        if (/ENCODING=QUOTED-PRINTABLE/i.test(clave)) valor = decodificarQP(valor);
+
+        if (prop === 'FN') {
+          c.completo = validacion.limpiarTexto(valor.replace(/\\,/g, ','));
+        } else if (prop === 'N') {
+          // Formato: Apellido;Nombre;SegundoNombre;Prefijo;Sufijo
+          var p = valor.split(';');
+          c.apellido = validacion.limpiarTexto((p[0] || '').replace(/\\,/g, ','));
+          c.nombre = validacion.limpiarTexto([p[1], p[2]].filter(Boolean).join(' ').replace(/\\,/g, ','));
+        } else if (prop === 'TEL') {
+          c.tels.push(valor);
+        } else if (prop === 'EMAIL') {
+          c.emails.push(valor);
+        } else if (prop === 'ORG') {
+          c.empresa = validacion.limpiarTexto(valor.split(';')[0].replace(/\\,/g, ','));
+        }
+      });
+
+      // Si no hay N pero sí FN, dividimos el nombre completo
+      if (!c.nombre && !c.apellido && c.completo) {
+        var sepa = validacion.separarNombre(c.completo);
+        c.nombre = sepa.nombre; c.apellido = sepa.apellido;
+      }
+
+      if (!c.emails.length && !c.tels.length && !c.completo) return; // vCard vacía
+
+      // Una fila por cada combinación relevante: priorizamos email, si no, teléfono
+      var maxFilas = Math.max(c.emails.length, c.tels.length, 1);
+      for (var k = 0; k < maxFilas; k++) {
+        filas.push([
+          c.nombre || '',
+          c.apellido || '',
+          c.emails[k] || (k === 0 ? '' : ''),
+          c.tels[k] || (k === 0 ? (c.tels[0] || '') : ''),
+          c.empresa || ''
+        ]);
+      }
+    });
+
+    return {
+      encabezados: ['Nombre', 'Apellido', 'Email', 'Teléfono', 'Empresa'],
+      filas: filas,
+      origen: 'vcf',
+      aviso: 'Se leyeron ' + bloques.length + ' tarjetas vCard.'
+    };
+  }
+
+  // ===========================================================================
+  // 3. Exportación de chat de WhatsApp (.txt)
+  // ===========================================================================
+
+  // [12/03/24, 10:33:11] Juan Pérez: hola     |     12/3/24, 10:33 - +593 99 123 4567: hola
+  var RE_LINEA_WA = /^\[?\s*\d{1,4}[\/.\-]\d{1,2}[\/.\-]\d{2,4},?\s+\d{1,2}:\d{2}(?::\d{2})?\s*(?:[ap]\.?\s?m\.?)?\s*\]?\s*[-–—]?\s*([^:]{1,80}?):\s/i;
+
+  /** ¿El texto parece una exportación de chat de WhatsApp? */
+  function pareceWhatsApp(texto) {
+    var lineas = texto.split(/\r?\n/).slice(0, 60);
+    var coincidencias = lineas.filter(function (l) { return RE_LINEA_WA.test(l); }).length;
+    return coincidencias >= 3;
+  }
+
+  function parsearWhatsApp(texto) {
+    var lineas = texto.split(/\r?\n/);
+    var vistos = Object.create(null);
+    var filas = [];
+    var mensajes = 0;
+
+    lineas.forEach(function (linea) {
+      var m = linea.match(RE_LINEA_WA);
+      if (!m) return;
+      mensajes++;
+
+      var remitente = validacion.limpiarTexto(m[1]).replace(/^~\s*/, ''); // "~ Alias"
+      if (!remitente) return;
+      // Mensajes de sistema ("Juan añadió a Pedro", cifrado, etc.)
+      if (/^(mensajes y llamadas|messages and calls|los mensajes)/i.test(remitente)) return;
+
+      var clave = remitente.toLowerCase();
+      if (vistos[clave]) return;
+      vistos[clave] = true;
+
+      if (telefono.pareceTelefono(remitente)) {
+        filas.push(['', remitente]);          // solo número
+      } else {
+        filas.push([remitente, '']);          // nombre guardado en la agenda
+      }
+    });
+
+    // También rescatamos números sueltos que aparezcan en el cuerpo del chat
+    // (por ejemplo, cuando alguien comparte un contacto).
+    return {
+      encabezados: ['Nombre', 'Teléfono'],
+      filas: filas,
+      origen: 'whatsapp',
+      aviso: 'Se analizaron ' + mensajes + ' mensajes y se encontraron ' +
+             filas.length + ' participantes únicos. Los contactos guardados en tu ' +
+             'agenda aparecen con nombre pero sin número: WhatsApp no lo incluye en la exportación.'
+    };
+  }
+
+  // ===========================================================================
+  // 4. Texto libre pegado por el usuario
+  // ===========================================================================
+
+  /**
+   * Analiza texto pegado. Primero intenta interpretarlo como tabla delimitada;
+   * si no lo consigue, extrae email / teléfono / nombre de cada línea.
+   */
+  function parsearTextoPegado(texto) {
+    var t = String(texto).replace(/\r\n/g, '\n').trim();
+    if (!t) return { encabezados: [], filas: [], origen: 'texto', aviso: 'No se pegó ningún contenido.' };
+
+    if (pareceWhatsApp(t)) return parsearWhatsApp(t);
+    if (/BEGIN:VCARD/i.test(t)) return parsearVCF(t);
+
+    var delim = detectarDelimitador(t);
+    var lineas = t.split('\n').filter(function (l) { return l.trim() !== ''; });
+
+    // ¿La mayoría de líneas tienen el delimitador? -> tratamos como CSV
+    var conDelim = lineas.filter(function (l) { return l.indexOf(delim) !== -1; }).length;
+    if (lineas.length > 0 && conDelim / lineas.length > 0.6) {
+      return parsearCSV(t, delim);
+    }
+
+    // Modo "texto suelto": una línea = un contacto
+    var filas = lineas.map(function (linea) {
+      var resto = linea;
+      var email = '';
+      var tel = '';
+
+      var emails = validacion.extraerEmails(resto);
+      if (emails.length) {
+        email = emails[0];
+        resto = resto.replace(new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, '\\</body>'), 'ig'), ' ');
+      }
+
+      // Teléfono: secuencia larga de dígitos con separadores típicos
+      var mTel = resto.match(/(\+?\d[\d\s().\-]{6,20}\d)/);
+      if (mTel) {
+        tel = mTel[1].trim();
+        resto = resto.replace(mTel[1], ' ');
+      }
+
+      var nombre = validacion.limpiarTexto(resto.replace(/[<>,;|\t]+/g, ' '));
+      return [nombre, email, tel];
+    }).filter(function (f) { return f[0] || f[1] || f[2]; });
+
+    return {
+      encabezados: ['Nombre', 'Email', 'Teléfono'],
+      filas: filas,
+      origen: 'texto',
+      aviso: 'Texto interpretado línea a línea (no se detectó una tabla con delimitadores).'
+    };
+  }
+
+  /** Elige el analizador adecuado según el nombre del archivo y su contenido. */
+  function parsearTextoDeArchivo(texto, nombreArchivo) {
+    var ext = (nombreArchivo || '').toLowerCase().split('.').pop();
+
+    if (ext === 'vcf' || /BEGIN:VCARD/i.test(texto.slice(0, 2000))) return parsearVCF(texto);
+    if (pareceWhatsApp(texto)) return parsearWhatsApp(texto);
+    if (ext === 'csv' || ext === 'tsv') return parsearCSV(texto);
+    return parsearTextoPegado(texto);
+  }
+
+  var API = {
+    detectarDelimitador: detectarDelimitador,
+    analizarCSV: analizarCSV,
+    matrizATabla: matrizATabla,
+    pareceEncabezado: pareceEncabezado,
+    parsearCSV: parsearCSV,
+    parsearVCF: parsearVCF,
+    parsearWhatsApp: parsearWhatsApp,
+    pareceWhatsApp: pareceWhatsApp,
+    parsearTextoPegado: parsearTextoPegado,
+    parsearTextoDeArchivo: parsearTextoDeArchivo
+  };
+
+  global.CB = global.CB || {};
+  global.CB.parsers = API;
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+
+})(typeof self !== 'undefined' ? self : this);
+
+
+/* ======== js/nucleo/detector.js ======== */
+/**
+ * detector.js
+ * -----------------------------------------------------------------------------
+ * Mapeo AUTOMÁTICO de columnas: decide qué columna del archivo corresponde a
+ * cada campo de destino (EMAIL, NOMBRE, APELLIDO, TELEFONO, EMPRESA, LISTA).
+ *
+ * Cada par (columna, campo) recibe una puntuación de 0 a 100 que combina:
+ *   - Coincidencia del ENCABEZADO con sinónimos conocidos (peso alto).
+ *   - Coincidencia del CONTENIDO con el patrón esperado (peso alto).
+ * Después se asignan los pares de mayor puntuación evitando duplicar campos.
+ * -----------------------------------------------------------------------------
+ */
+(function (global) {
+  'use strict';
+
+  var validacion = (global.CB && global.CB.validacion)
+    ? global.CB.validacion
+    : (typeof require !== 'undefined' ? require('./validacion.js') : null);
+  var telefono = (global.CB && global.CB.telefono)
+    ? global.CB.telefono
+    : (typeof require !== 'undefined' ? require('./telefono.js') : null);
+
+  /** Campos de destino disponibles. NOMBRE_COMPLETO se divide luego en 2. */
+  var CAMPOS = [
+    { id: 'EMAIL',           etiqueta: 'Email (obligatorio)' },
+    { id: 'NOMBRE',          etiqueta: 'Nombre' },
+    { id: 'APELLIDO',        etiqueta: 'Apellido' },
+    { id: 'NOMBRE_COMPLETO', etiqueta: 'Nombre completo (se divide automáticamente)' },
+    { id: 'TELEFONO',        etiqueta: 'Teléfono' },
+    { id: 'EMPRESA',         etiqueta: 'Empresa' },
+    { id: 'LISTA',           etiqueta: 'Lista' },
+    { id: 'IGNORAR',         etiqueta: '— No importar —' }
+  ];
+
+  /** Sinónimos de encabezado por campo (sin acentos, en minúsculas). */
+  var SINONIMOS = {
+    EMAIL: ['email', 'e-mail', 'e mail', 'correo', 'correo electronico', 'mail', 'emailaddress',
+            'email address', 'direccion de correo', 'correo-e', 'e_mail'],
+    NOMBRE: ['nombre', 'nombres', 'first name', 'firstname', 'first_name', 'given name',
+             'primer nombre', 'name'],
+    APELLIDO: ['apellido', 'apellidos', 'last name', 'lastname', 'last_name', 'surname',
+               'family name', 'primer apellido'],
+    NOMBRE_COMPLETO: ['nombre completo', 'full name', 'fullname', 'nombre y apellido',
+                      'nombre y apellidos', 'contacto', 'display name', 'nombre_completo',
+                      'razon social', 'cliente'],
+    TELEFONO: ['telefono', 'telefonos', 'tel', 'phone', 'phone number', 'celular', 'movil',
+               'mobile', 'whatsapp', 'numero', 'número', 'nro', 'contacto telefonico', 'sms',
+               'telefono movil', 'cell'],
+    EMPRESA: ['empresa', 'compania', 'compañia', 'company', 'organizacion', 'organization',
+              'org', 'negocio', 'business'],
+    LISTA: ['lista', 'list', 'listas', 'grupo', 'group', 'segmento', 'tag', 'tags', 'etiqueta',
+            'categoria']
+  };
+
+  /** Normaliza un encabezado: minúsculas, sin acentos, sin signos. */
+  function normalizarClave(txt) {
+    return String(txt || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9\s_-]/g, '')
+      .replace(/[_-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /** Puntuación 0-40 por coincidencia del encabezado. */
+  function puntuarEncabezado(encabezado, campoId) {
+    var lista = SINONIMOS[campoId];
+    if (!lista) return 0;
+    var clave = normalizarClave(encabezado);
+    if (!clave) return 0;
+
+    for (var i = 0; i < lista.length; i++) {
+      if (clave === lista[i]) return 40;             // coincidencia exacta
+    }
+    for (var j = 0; j < lista.length; j++) {
+      if (clave.indexOf(lista[j]) !== -1) return 28; // el encabezado contiene el sinónimo
+    }
+    return 0;
+  }
+
+  /** Puntuación 0-60 por análisis del contenido de la columna. */
+  function puntuarContenido(valores, campoId) {
+    var utiles = valores.filter(function (v) { return String(v || '').trim() !== ''; });
+    if (!utiles.length) return 0;
+
+    var aciertos = 0;
+    utiles.forEach(function (v) {
+      var t = String(v).trim();
+      switch (campoId) {
+        case 'EMAIL':
+          if (validacion.pareceEmail(t)) aciertos++;
+          break;
+        case 'TELEFONO':
+          if (telefono.pareceTelefono(t)) aciertos++;
+          break;
+        case 'NOMBRE':
+        case 'APELLIDO':
+          // Una sola palabra alfabética
+          if (validacion.pareceNombre(t) && t.split(/\s+/).length === 1) aciertos++;
+          break;
+        case 'NOMBRE_COMPLETO':
+          if (validacion.pareceNombre(t) && t.split(/\s+/).length >= 2) aciertos++;
+          break;
+        case 'EMPRESA':
+        case 'LISTA':
+          // No hay patrón fiable: solo descartamos emails y teléfonos
+          if (t.indexOf('@') === -1 && !telefono.pareceTelefono(t)) aciertos++;
+          break;
+        default:
+          break;
+      }
+    });
+
+    var proporcion = aciertos / utiles.length;
+    // EMPRESA / LISTA son campos "comodín": su contenido pesa mucho menos
+    var tope = (campoId === 'EMPRESA' || campoId === 'LISTA') ? 12 : 60;
+    return Math.round(proporcion * tope);
+  }
+
+  /**
+   * Sugiere un mapeo automático.
+   * @param {Array<string>} encabezados
+   * @param {Array<Array<string>>} filas
+   * @param {number} muestra  Nº de filas a analizar (por defecto 200)
+   * @returns {{mapeo: Object, puntuaciones: Object}}
+   *          mapeo: { indiceColumna: 'CAMPO' }
+   */
+  function sugerirMapeo(encabezados, filas, muestra) {
+    var limite = muestra || 200;
+    var datos = filas.slice(0, limite);
+    var candidatos = [];
+
+    encabezados.forEach(function (enc, idx) {
+      var valores = datos.map(function (f) { return f[idx]; });
+      Object.keys(SINONIMOS).forEach(function (campoId) {
+        var p = puntuarEncabezado(enc, campoId) + puntuarContenido(valores, campoId);
+        if (p > 0) candidatos.push({ columna: idx, campo: campoId, puntaje: p });
+      });
+    });
+
+    candidatos.sort(function (a, b) { return b.puntaje - a.puntaje; });
+
+    var mapeo = {};
+    var columnasUsadas = {};
+    var camposUsados = {};
+
+    candidatos.forEach(function (c) {
+      if (columnasUsadas[c.columna] || camposUsados[c.campo]) return;
+      if (c.puntaje < 20) return;                       // umbral mínimo de confianza
+      // NOMBRE_COMPLETO no puede convivir con NOMBRE o APELLIDO
+      if (c.campo === 'NOMBRE_COMPLETO' && (camposUsados.NOMBRE || camposUsados.APELLIDO)) return;
+      if ((c.campo === 'NOMBRE' || c.campo === 'APELLIDO') && camposUsados.NOMBRE_COMPLETO) return;
+
+      mapeo[c.columna] = c.campo;
+      columnasUsadas[c.columna] = true;
+      camposUsados[c.campo] = true;
+    });
+
+    // Las columnas sin asignar se ignoran
+    encabezados.forEach(function (_, idx) {
+      if (!mapeo.hasOwnProperty(idx)) mapeo[idx] = 'IGNORAR';
+    });
+
+    return { mapeo: mapeo, candidatos: candidatos };
+  }
+
+  var API = {
+    CAMPOS: CAMPOS,
+    SINONIMOS: SINONIMOS,
+    normalizarClave: normalizarClave,
+    puntuarEncabezado: puntuarEncabezado,
+    puntuarContenido: puntuarContenido,
+    sugerirMapeo: sugerirMapeo
+  };
+
+  global.CB = global.CB || {};
+  global.CB.detector = API;
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+
+})(typeof self !== 'undefined' ? self : this);
+
+
+/* ======== js/nucleo/perfiles.js ======== */
+/**
+ * perfiles.js
+ * -----------------------------------------------------------------------------
+ * Perfiles de exportación: definen las columnas y su orden en el CSV final
+ * según la plataforma de destino.
+ *
+ * El campo interno (EMAIL, NOMBRE, ...) se traduce al nombre de columna que
+ * espera cada plataforma.
+ * -----------------------------------------------------------------------------
+ */
+(function (global) {
+  'use strict';
+
+  var PERFILES = {
+    brevo: {
+      id: 'brevo',
+      nombre: 'Brevo (ex Sendinblue)',
+      delimitadorSugerido: ';',
+      limite: 100000,
+      // orden de columnas: [campo interno, encabezado en el CSV]
+      columnas: [
+        ['EMAIL',    'EMAIL'],
+        ['NOMBRE',   'NOMBRE'],
+        ['APELLIDO', 'APELLIDO'],
+        ['TELEFONO', 'TELEFONO'],
+        ['EMPRESA',  'EMPRESA'],
+        ['LISTA',    'LISTA']
+      ],
+      nota: 'Sube el archivo en Brevo desde Contactos → Importar contactos. ' +
+            'Si vas a enviar SMS/WhatsApp, crea también el atributo SMS con el mismo teléfono.'
+    },
+
+    mailchimp: {
+      id: 'mailchimp',
+      nombre: 'Mailchimp',
+      delimitadorSugerido: ',',
+      limite: 100000,
+      columnas: [
+        ['EMAIL',    'Email Address'],
+        ['NOMBRE',   'First Name'],
+        ['APELLIDO', 'Last Name'],
+        ['TELEFONO', 'Phone Number'],
+        ['EMPRESA',  'Company'],
+        ['LISTA',    'Tags']
+      ],
+      nota: 'Mailchimp espera coma como separador y la columna "Email Address" obligatoria.'
+    },
+
+    hubspot: {
+      id: 'hubspot',
+      nombre: 'HubSpot',
+      delimitadorSugerido: ',',
+      limite: 100000,
+      columnas: [
+        ['EMAIL',    'Email'],
+        ['NOMBRE',   'First Name'],
+        ['APELLIDO', 'Last Name'],
+        ['TELEFONO', 'Phone Number'],
+        ['EMPRESA',  'Company Name'],
+        ['LISTA',    'Lifecycle Stage']
+      ],
+      nota: 'En HubSpot usa Contactos → Importar → Archivo desde el equipo.'
+    },
+
+    generico: {
+      id: 'generico',
+      nombre: 'Genérico (columnas internas)',
+      delimitadorSugerido: ',',
+      limite: 1000000,
+      columnas: [
+        ['EMAIL',    'EMAIL'],
+        ['NOMBRE',   'NOMBRE'],
+        ['APELLIDO', 'APELLIDO'],
+        ['TELEFONO', 'TELEFONO'],
+        ['EMPRESA',  'EMPRESA'],
+        ['LISTA',    'LISTA']
+      ],
+      nota: 'Formato neutro, útil para importar en cualquier otra herramienta.'
+    }
+  };
+
+  var API = { PERFILES: PERFILES };
+
+  global.CB = global.CB || {};
+  global.CB.perfiles = API;
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+
+})(typeof self !== 'undefined' ? self : this);
+
+
+/* ======== js/nucleo/procesador.js ======== */
+/**
+ * procesador.js
+ * -----------------------------------------------------------------------------
+ * Motor de transformación: convierte las filas crudas + el mapeo de columnas
+ * en contactos limpios, validados y sin duplicados.
+ *
+ * Está pensado para trabajar POR LOTES, de modo que pueda ejecutarse dentro de
+ * un Web Worker (o en el hilo principal troceado con setTimeout) sin bloquear
+ * la interfaz con 100.000 contactos.
+ * -----------------------------------------------------------------------------
+ */
+(function (global) {
+  'use strict';
+
+  var validacion = (global.CB && global.CB.validacion)
+    ? global.CB.validacion
+    : (typeof require !== 'undefined' ? require('./validacion.js') : null);
+  var telefono = (global.CB && global.CB.telefono)
+    ? global.CB.telefono
+    : (typeof require !== 'undefined' ? require('./telefono.js') : null);
+
+  /**
+   * Crea el estado inicial del procesamiento.
+   * @param {Object} opciones
+   *   {
+   *     mapeo: { '0': 'EMAIL', '1': 'NOMBRE', ... },
+   *     paisPorDefecto: 'EC',
+   *     eliminarDuplicados: true,
+   *     criterioDuplicado: 'email' | 'telefono' | 'ambos',
+   *     requerirEmail: true,
+   *     capitalizarNombres: true,
+   *     valoresFijos: { LISTA: 'CLIENTES' }
+   *   }
+   */
+  function crearEstado(opciones) {
+    return {
+      opciones: opciones,
+      contactos: [],
+      invalidos: [],           // filas descartadas con su motivo
+      vistosEmail: Object.create(null),
+      vistosTelefono: Object.create(null),
+      estadisticas: {
+        filasLeidas: 0,
+        validos: 0,
+        duplicados: 0,
+        sinEmail: 0,
+        emailInvalido: 0,
+        telefonoInvalido: 0,
+        telefonosValidos: 0,
+        vacias: 0
+      }
+    };
+  }
+
+  /**
+   * Procesa un lote de filas acumulando el resultado en `estado`.
+   * @param {Object} estado  Devuelto por crearEstado()
+   * @param {Array<Array<string>>} filas
+   */
+  function procesarLote(estado, filas) {
+    var o = estado.opciones;
+    var mapeo = o.mapeo || {};
+    var fijos = o.valoresFijos || {};
+    var est = estado.estadisticas;
+
+    // Índice inverso: campo -> lista de columnas asignadas
+    var porCampo = {};
+    Object.keys(mapeo).forEach(function (col) {
+      var campo = mapeo[col];
+      if (!campo || campo === 'IGNORAR') return;
+      (porCampo[campo] = porCampo[campo] || []).push(parseInt(col, 10));
+    });
+
+    for (var i = 0; i < filas.length; i++) {
+      var fila = filas[i];
+      est.filasLeidas++;
+
+      // ---- Extracción de valores según el mapeo ----------------------------
+      function tomar(campo) {
+        var cols = porCampo[campo];
+        if (!cols) return '';
+        for (var k = 0; k < cols.length; k++) {
+          var v = fila[cols[k]];
+          if (v !== undefined && v !== null && String(v).trim() !== '') return String(v);
+        }
+        return '';
+      }
+
+      var crudoEmail    = tomar('EMAIL');
+      var crudoNombre   = tomar('NOMBRE');
+      var crudoApellido = tomar('APELLIDO');
+      var crudoCompleto = tomar('NOMBRE_COMPLETO');
+      var crudoTel      = tomar('TELEFONO');
+      var crudoEmpresa  = tomar('EMPRESA');
+      var crudoLista    = tomar('LISTA');
+
+      if (!crudoEmail && !crudoTel && !crudoNombre && !crudoApellido && !crudoCompleto) {
+        est.vacias++;
+        continue;
+      }
+
+      // ---- Nombre / Apellido ----------------------------------------------
+      var nombre = validacion.limpiarTexto(crudoNombre);
+      var apellido = validacion.limpiarTexto(crudoApellido);
+
+      if (crudoCompleto && (!nombre || !apellido)) {
+        var partido = validacion.separarNombre(crudoCompleto);
+        if (!nombre) nombre = partido.nombre;
+        if (!apellido) apellido = partido.apellido;
+      }
+      // Si solo hay "NOMBRE" pero contiene varias palabras, lo dividimos
+      if (nombre && !apellido && o.dividirNombreCompleto !== false && nombre.split(' ').length > 1) {
+        var p2 = validacion.separarNombre(nombre);
+        nombre = p2.nombre; apellido = p2.apellido;
+      }
+      if (o.capitalizarNombres !== false) {
+        nombre = validacion.capitalizarNombre(nombre);
+        apellido = validacion.capitalizarNombre(apellido);
+      }
+
+      // ---- Email ------------------------------------------------------------
+      var resEmail = validacion.normalizarEmail(crudoEmail);
+      var email = resEmail.ok ? resEmail.email : '';
+
+      if (!crudoEmail) est.sinEmail++;
+      else if (!resEmail.ok) est.emailInvalido++;
+
+      // ---- Teléfono ---------------------------------------------------------
+      var resTel = telefono.normalizar(crudoTel, o.paisPorDefecto);
+      var tel = resTel.ok ? (o.formatoTelefono === 'e164' ? resTel.e164 : resTel.formateado) : '';
+      var telClave = resTel.ok ? resTel.e164 : '';
+      if (crudoTel && !resTel.ok) est.telefonoInvalido++;
+      if (resTel.ok) est.telefonosValidos++;
+
+      // ---- Descartes --------------------------------------------------------
+      if (o.requerirEmail !== false && !email) {
+        estado.invalidos.push({
+          fila: est.filasLeidas,
+          email: crudoEmail, nombre: nombre, telefono: crudoTel,
+          motivo: crudoEmail ? (resEmail.motivo || 'Email inválido') : 'Sin email'
+        });
+        continue;
+      }
+      if (o.requerirEmail === false && !email && !tel) {
+        estado.invalidos.push({
+          fila: est.filasLeidas,
+          email: crudoEmail, nombre: nombre, telefono: crudoTel,
+          motivo: 'Sin email ni teléfono válidos'
+        });
+        continue;
+      }
+
+      // ---- Duplicados -------------------------------------------------------
+      if (o.eliminarDuplicados) {
+        var crit = o.criterioDuplicado || 'email';
+        var dupEmail = email && estado.vistosEmail[email];
+        var dupTel = telClave && estado.vistosTelefono[telClave];
+        var esDup =
+          (crit === 'email' && dupEmail) ||
+          (crit === 'telefono' && dupTel) ||
+          (crit === 'ambos' && (dupEmail || dupTel));
+
+        if (esDup) { est.duplicados++; continue; }
+      }
+      if (email) estado.vistosEmail[email] = true;
+      if (telClave) estado.vistosTelefono[telClave] = true;
+
+      // ---- Contacto final ---------------------------------------------------
+      estado.contactos.push({
+        EMAIL: email,
+        NOMBRE: nombre,
+        APELLIDO: apellido,
+        TELEFONO: tel,
+        EMPRESA: validacion.limpiarTexto(crudoEmpresa) || (fijos.EMPRESA || ''),
+        LISTA: validacion.limpiarTexto(crudoLista) || (fijos.LISTA || '')
+      });
+      est.validos++;
+    }
+
+    return estado;
+  }
+
+  /** Procesa todas las filas de una vez (útil para pruebas y archivos pequeños). */
+  function procesarTodo(filas, opciones) {
+    var estado = crearEstado(opciones);
+    procesarLote(estado, filas);
+    return estado;
+  }
+
+  var API = {
+    crearEstado: crearEstado,
+    procesarLote: procesarLote,
+    procesarTodo: procesarTodo
+  };
+
+  global.CB = global.CB || {};
+  global.CB.procesador = API;
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+
+})(typeof self !== 'undefined' ? self : this);
+
+
+/* ======== js/nucleo/exportador.js ======== */
+/**
+ * exportador.js
+ * -----------------------------------------------------------------------------
+ * Generación del CSV final y codificación de bytes.
+ *
+ * Puntos importantes para Brevo:
+ *   - UTF-8 con BOM evita que Excel destroce los acentos al abrir el archivo.
+ *   - Delimitador ";" es el habitual en configuraciones en español.
+ *   - Los valores que contienen el delimitador, comillas o saltos de línea se
+ *     entrecomillan y las comillas internas se duplican ("" según RFC 4180).
+ *   - Se antepone un apóstrofo... NO. Brevo prefiere el teléfono tal cual en
+ *     formato internacional, así que lo dejamos con el "+" delante.
+ * -----------------------------------------------------------------------------
+ */
+(function (global) {
+  'use strict';
+
+  var perfiles = (global.CB && global.CB.perfiles)
+    ? global.CB.perfiles
+    : (typeof require !== 'undefined' ? require('./perfiles.js') : null);
+
+  /** Escapa un valor para CSV según RFC 4180. */
+  function escapar(valor, delimitador) {
+    var v = (valor === null || valor === undefined) ? '' : String(valor);
+    // Protección anti "CSV injection" en Excel/Sheets
+    if (/^[=+\-@\t\r]/.test(v) && !/^\+\d/.test(v)) {
+      v = "'" + v;  // el "+" de un teléfono internacional se respeta
+    }
+    if (v.indexOf(delimitador) !== -1 || v.indexOf('"') !== -1 ||
+        v.indexOf('\n') !== -1 || v.indexOf('\r') !== -1) {
+      return '"' + v.replace(/"/g, '""') + '"';
+    }
+    return v;
+  }
+
+  /**
+   * Construye el texto CSV.
+   * @param {Array<Object>} contactos  Objetos con claves EMAIL, NOMBRE, ...
+   * @param {Object} opciones { perfil:'brevo', delimitador:';', finLinea:'\r\n',
+   *                            columnasVacias:false }
+   * @returns {string}
+   */
+  function generarCSV(contactos, opciones) {
+    var o = opciones || {};
+    var perfil = perfiles.PERFILES[o.perfil || 'brevo'] || perfiles.PERFILES.brevo;
+    var d = o.delimitador || perfil.delimitadorSugerido;
+    var eol = o.finLinea || '\r\n';
+
+    var columnas = perfil.columnas.slice();
+
+    // Opcionalmente omitimos columnas que están vacías en TODOS los contactos
+    if (o.omitirColumnasVacias) {
+      columnas = columnas.filter(function (c) {
+        if (c[0] === 'EMAIL') return true; // siempre
+        return contactos.some(function (ct) { return ct[c[0]]; });
+      });
+    }
+
+    var lineas = [];
+    lineas.push(columnas.map(function (c) { return escapar(c[1], d); }).join(d));
+
+    for (var i = 0; i < contactos.length; i++) {
+      var ct = contactos[i];
+      var celdas = new Array(columnas.length);
+      for (var j = 0; j < columnas.length; j++) {
+        celdas[j] = escapar(ct[columnas[j][0]] || '', d);
+      }
+      lineas.push(celdas.join(d));
+    }
+
+    return lineas.join(eol) + eol;
+  }
+
+  // ===========================================================================
+  // Codificación de bytes
+  // ===========================================================================
+
+  /** Convierte texto a Uint8Array en UTF-8 (con o sin BOM). */
+  function aUTF8(texto, conBOM) {
+    var cuerpo;
+    if (typeof TextEncoder !== 'undefined') {
+      cuerpo = new TextEncoder().encode(texto);
+    } else if (typeof Buffer !== 'undefined') {
+      cuerpo = new Uint8Array(Buffer.from(texto, 'utf8'));
+    } else {
+      cuerpo = new Uint8Array(unescape(encodeURIComponent(texto)).split('').map(function (c) {
+        return c.charCodeAt(0);
+      }));
+    }
+    if (!conBOM) return cuerpo;
+
+    var salida = new Uint8Array(cuerpo.length + 3);
+    salida[0] = 0xEF; salida[1] = 0xBB; salida[2] = 0xBF;
+    salida.set(cuerpo, 3);
+    return salida;
+  }
+
+  /** Quita acentos de un carácter que no cabe en ISO-8859-1. */
+  function transliterar(car) {
+    var base = car.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return base.length ? base : '?';
+  }
+
+  /** Convierte texto a Uint8Array en ISO-8859-1 (Latin-1). */
+  function aLatin1(texto) {
+    var bytes = [];
+    for (var i = 0; i < texto.length; i++) {
+      var cp = texto.charCodeAt(i);
+      if (cp <= 0xFF) { bytes.push(cp); continue; }
+      var alt = transliterar(texto[i]);
+      for (var k = 0; k < alt.length; k++) {
+        var c2 = alt.charCodeAt(k);
+        bytes.push(c2 <= 0xFF ? c2 : 0x3F); // '?'
+      }
+    }
+    return new Uint8Array(bytes);
+  }
+
+  /**
+   * Codifica el texto CSV según la opción elegida.
+   * @param {string} texto
+   * @param {'utf8bom'|'utf8'|'latin1'} codificacion
+   * @returns {Uint8Array}
+   */
+  function codificar(texto, codificacion) {
+    switch (codificacion) {
+      case 'utf8':    return aUTF8(texto, false);
+      case 'latin1':  return aLatin1(texto);
+      case 'utf8bom':
+      default:        return aUTF8(texto, true);
+    }
+  }
+
+  /** MIME adecuado para la descarga. */
+  function tipoMime(codificacion) {
+    return codificacion === 'latin1'
+      ? 'text/csv;charset=iso-8859-1'
+      : 'text/csv;charset=utf-8';
+  }
+
+  var API = {
+    escapar: escapar,
+    generarCSV: generarCSV,
+    codificar: codificar,
+    aUTF8: aUTF8,
+    aLatin1: aLatin1,
+    tipoMime: tipoMime
+  };
+
+  global.CB = global.CB || {};
+  global.CB.exportador = API;
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+
+})(typeof self !== 'undefined' ? self : this);
+
+
+/* ======== js/app.js ======== */
+/**
+ * app.js
+ * -----------------------------------------------------------------------------
+ * Controlador de la interfaz: une la lectura de archivos, el mapeo de columnas,
+ * el procesamiento (en Web Worker) y la descarga del CSV.
+ *
+ * Ningún dato sale del navegador: no hay peticiones de red salvo la carga
+ * inicial de la librería SheetJS desde el CDN (y solo si no hay copia local).
+ * -----------------------------------------------------------------------------
+ */
+(function () {
+  'use strict';
+
+  var CB = window.CB;
+  var TAM_MAX_MB = 50;                 // tamaño máximo de archivo aceptado
+  var LIMITE_BREVO = 100000;           // contactos por archivo que admite Brevo
+  var CLAVE_PLANTILLAS = 'cb_plantillas_mapeo';
+
+  // Estado de la aplicación --------------------------------------------------
+  var estado = {
+    tabla: null,        // { encabezados, filas, origen, aviso }
+    libroExcel: null,   // libro SheetJS cuando hay varias hojas
+    nombreArchivo: '',
+    mapeo: {},          // { indiceColumna: 'CAMPO' }
+    resultado: null,    // { csv, estadisticas, muestra, invalidos, totalContactos }
+    trabajador: null
+  };
+
+  // ===========================================================================
+  // Utilidades cortas de DOM
+  // ===========================================================================
+  function $(sel) { return document.querySelector(sel); }
+  function crear(tag, clase, texto) {
+    var el = document.createElement(tag);
+    if (clase) el.className = clase;
+    if (texto !== undefined) el.textContent = texto;
+    return el;
+  }
+  function mostrar(sel) { $(sel).classList.remove('oculto'); }
+  function ocultar(sel) { $(sel).classList.add('oculto'); }
+  function numero(n) { return (n || 0).toLocaleString('es-ES'); }
+
+  var temporizadorBrindis;
+  function brindis(mensaje) {
+    var el = $('#brindis');
+    el.textContent = mensaje;
+    el.classList.add('brindis--visible');
+    clearTimeout(temporizadorBrindis);
+    temporizadorBrindis = setTimeout(function () {
+      el.classList.remove('brindis--visible');
+    }, 2800);
+  }
+
+  function error(mensaje) {
+    var el = $('#alertaEntrada');
+    el.textContent = mensaje;
+    el.classList.remove('oculto');
+  }
+  function limpiarError() { ocultar('#alertaEntrada'); }
+
+  // ===========================================================================
+  // Arranque
+  // ===========================================================================
+  function iniciar() {
+    $('#maxMB').textContent = TAM_MAX_MB;
+    rellenarSelectorPaises();
+    rellenarSelectorPerfiles();
+    cargarListaPlantillas();
+    conectarEventos();
+  }
+
+  function rellenarSelectorPaises() {
+    var sel = $('#optPais');
+    CB.paises.PAISES.slice()
+      .sort(function (a, b) { return a.nombre.localeCompare(b.nombre, 'es'); })
+      .forEach(function (p) {
+        var o = crear('option', null, p.nombre + '  (+' + p.codigo + ')');
+        o.value = p.iso;
+        sel.appendChild(o);
+      });
+    sel.value = 'EC'; // Ecuador por defecto; cámbialo si trabajas con otro país
+  }
+
+  function rellenarSelectorPerfiles() {
+    var sel = $('#optPerfil');
+    Object.keys(CB.perfiles.PERFILES).forEach(function (id) {
+      var o = crear('option', null, CB.perfiles.PERFILES[id].nombre);
+      o.value = id;
+      sel.appendChild(o);
+    });
+    sel.value = 'brevo';
+    alCambiarPerfil();
+  }
+
+  function alCambiarPerfil() {
+    var p = CB.perfiles.PERFILES[$('#optPerfil').value];
+    $('#notaPerfil').textContent = p.nota;
+    $('#optDelimitador').value = p.delimitadorSugerido;
+    $('#optNombreArchivo').value = 'contactos-' + p.id;
+  }
+
+  // ===========================================================================
+  // Eventos
+  // ===========================================================================
+  function conectarEventos() {
+    // --- Pestañas ---
+    document.querySelectorAll('.pestana').forEach(function (b) {
+      b.addEventListener('click', function () {
+        document.querySelectorAll('.pestana').forEach(function (x) { x.classList.remove('pestana--activa'); });
+        document.querySelectorAll('.panel').forEach(function (x) { x.classList.remove('panel--activo'); });
+        b.classList.add('pestana--activa');
+        $('#' + b.dataset.panel).classList.add('panel--activo');
+      });
+    });
+
+    // --- Zona de arrastre ---
+    var zona = $('#zonaSuelta');
+    var entrada = $('#entradaArchivo');
+
+    zona.addEventListener('click', function () { entrada.click(); });
+    zona.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); entrada.click(); }
+    });
+    entrada.addEventListener('change', function () {
+      if (entrada.files && entrada.files[0]) recibirArchivo(entrada.files[0]);
+    });
+
+    ['dragenter', 'dragover'].forEach(function (ev) {
+      zona.addEventListener(ev, function (e) {
+        e.preventDefault(); e.stopPropagation();
+        zona.classList.add('zona-suelta--activa');
+      });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+      zona.addEventListener(ev, function (e) {
+        e.preventDefault(); e.stopPropagation();
+        zona.classList.remove('zona-suelta--activa');
+      });
+    });
+    zona.addEventListener('drop', function (e) {
+      var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) recibirArchivo(f);
+    });
+    // Evita que el navegador abra el archivo si se suelta fuera de la zona
+    ['dragover', 'drop'].forEach(function (ev) {
+      window.addEventListener(ev, function (e) { e.preventDefault(); });
+    });
+
+    // --- Texto pegado ---
+    $('#btnAnalizarTexto').addEventListener('click', analizarTextoPegado);
+    $('#btnLimpiarTexto').addEventListener('click', function () { $('#areaPegado').value = ''; });
+
+    // --- Hojas de Excel ---
+    $('#selectorHoja').addEventListener('change', function () {
+      cargarHojaExcel(this.value);
+    });
+
+    // --- Opciones ---
+    $('#optPerfil').addEventListener('change', alCambiarPerfil);
+
+    // --- Plantillas ---
+    $('#btnGuardarPlantilla').addEventListener('click', guardarPlantilla);
+    $('#btnBorrarPlantilla').addEventListener('click', borrarPlantilla);
+    $('#selectorPlantilla').addEventListener('change', aplicarPlantilla);
+
+    // --- Acciones principales ---
+    $('#btnProcesar').addEventListener('click', procesar);
+    $('#btnReiniciar').addEventListener('click', function () { location.reload(); });
+    $('#btnDescargar').addEventListener('click', descargarCSV);
+    $('#btnCopiar').addEventListener('click', copiarCSV);
+    $('#btnVerErrores').addEventListener('click', function () {
+      $('#bloqueErrores').classList.toggle('oculto');
+    });
+    $('#btnDescargarErrores').addEventListener('click', descargarErrores);
+  }
+
+  // ===========================================================================
+  // Lectura de archivos
+  // ===========================================================================
+  var EXT_EXCEL = ['xlsx', 'xls', 'xlsm', 'xlsb', 'ods'];
+  var EXT_TEXTO = ['csv', 'tsv', 'txt', 'vcf', 'vcard'];
+
+  function recibirArchivo(archivo) {
+    limpiarError();
+
+    var ext = archivo.name.toLowerCase().split('.').pop();
+    if (EXT_EXCEL.indexOf(ext) === -1 && EXT_TEXTO.indexOf(ext) === -1) {
+      error('Formato no admitido: «.' + ext + '». Usa Excel (.xlsx, .xls), CSV, TSV, TXT o vCard (.vcf).');
+      return;
+    }
+    if (archivo.size > TAM_MAX_MB * 1024 * 1024) {
+      error('El archivo pesa ' + (archivo.size / 1048576).toFixed(1) + ' MB y el máximo son ' +
+            TAM_MAX_MB + ' MB. Divídelo en partes más pequeñas.');
+      return;
+    }
+    if (archivo.size === 0) { error('El archivo está vacío.'); return; }
+
+    estado.nombreArchivo = archivo.name;
+    $('#archivoInfo').innerHTML = '📄 <strong>' + escaparHTML(archivo.name) + '</strong> · ' +
+      (archivo.size / 1024).toFixed(1) + ' KB · leyendo…';
+    mostrar('#archivoInfo');
+
+    var lector = new FileReader();
+    lector.onerror = function () { error('No se pudo leer el archivo.'); };
+
+    if (EXT_EXCEL.indexOf(ext) !== -1) {
+      lector.onload = function (e) { leerExcel(e.target.result, archivo); };
+      lector.readAsArrayBuffer(archivo);
+    } else {
+      lector.onload = function (e) {
+        var texto = decodificarBytes(new Uint8Array(e.target.result));
+        var tabla = CB.parsers.parsearTextoDeArchivo(texto, archivo.name);
+        aceptarTabla(tabla, archivo);
+      };
+      lector.readAsArrayBuffer(archivo);
+    }
+  }
+
+  /**
+   * Decodifica bytes de texto probando UTF-8 y, si aparecen caracteres
+   * corruptos, reintentando con Windows-1252 (habitual en Excel en español).
+   */
+  function decodificarBytes(bytes) {
+    var texto;
+    try {
+      texto = new TextDecoder('utf-8').decode(bytes);
+    } catch (e) {
+      texto = String.fromCharCode.apply(null, bytes);
+    }
+    var corruptos = (texto.match(/�/g) || []).length;
+    if (corruptos > 0 && corruptos / Math.max(texto.length, 1) > 0.0002) {
+      try {
+        texto = new TextDecoder('windows-1252').decode(bytes);
+      } catch (e2) { /* nos quedamos con la versión UTF-8 */ }
+    }
+    return texto.replace(/^﻿/, '');
+  }
+
+  function leerExcel(buffer, archivo) {
+    if (typeof XLSX === 'undefined') {
+      error('No se pudo cargar la librería de Excel (SheetJS). Conéctate a Internet una vez ' +
+            'o descarga xlsx.full.min.js en la carpeta js/lib/. Mientras tanto, guarda tu ' +
+            'archivo como CSV desde Excel y vuelve a intentarlo.');
+      return;
+    }
+    try {
+      var libro = XLSX.read(new Uint8Array(buffer), { type: 'array', cellDates: false, raw: false });
+      estado.libroExcel = libro;
+
+      var hojas = libro.SheetNames;
+      var sel = $('#selectorHoja');
+      sel.innerHTML = '';
+      hojas.forEach(function (h) {
+        var o = crear('option', null, h);
+        o.value = h;
+        sel.appendChild(o);
+      });
+
+      if (hojas.length > 1) mostrar('#bloqueHojas'); else ocultar('#bloqueHojas');
+
+      // Elegimos la primera hoja que contenga datos
+      var elegida = hojas.find(function (h) {
+        var m = XLSX.utils.sheet_to_json(libro.Sheets[h], { header: 1, blankrows: false, defval: '' });
+        return m.length > 0;
+      }) || hojas[0];
+
+      sel.value = elegida;
+      cargarHojaExcel(elegida, archivo);
+    } catch (e) {
+      error('No se pudo leer el archivo de Excel: ' + e.message);
+    }
+  }
+
+  function cargarHojaExcel(nombreHoja, archivo) {
+    if (!estado.libroExcel) return;
+    var hoja = estado.libroExcel.Sheets[nombreHoja];
+    if (!hoja) return;
+
+    var matriz = XLSX.utils.sheet_to_json(hoja, { header: 1, blankrows: false, defval: '', raw: false });
+    matriz = matriz.map(function (f) {
+      return f.map(function (c) { return c === null || c === undefined ? '' : String(c); });
+    }).filter(function (f) {
+      return f.some(function (v) { return v.trim() !== ''; });
+    });
+
+    if (!matriz.length) {
+      error('La hoja «' + nombreHoja + '» está vacía. Elige otra hoja del libro.');
+      return;
+    }
+
+    var tabla = CB.parsers.matrizATabla(matriz, 'excel', 'Hoja «' + nombreHoja + '» del libro de Excel.');
+    aceptarTabla(tabla, archivo);
+  }
+
+  function analizarTextoPegado() {
+    limpiarError();
+    var texto = $('#areaPegado').value;
+    if (!texto.trim()) { error('No has pegado ningún texto.'); return; }
+
+    var tabla = CB.parsers.parsearTextoPegado(texto);
+    if (!tabla.filas.length) {
+      error('No se encontró ningún contacto en el texto pegado.');
+      return;
+    }
+    estado.nombreArchivo = 'texto-pegado';
+    estado.libroExcel = null;
+    ocultar('#bloqueHojas');
+    ocultar('#archivoInfo');
+    aceptarTabla(tabla, null);
+  }
+
+  // ===========================================================================
+  // Paso 2: previsualización y mapeo
+  // ===========================================================================
+  function aceptarTabla(tabla, archivo) {
+    if (!tabla || !tabla.filas.length) {
+      error('El archivo no contiene filas de datos reconocibles.');
+      return;
+    }
+    limpiarError();
+    estado.tabla = tabla;
+
+    if (archivo) {
+      $('#archivoInfo').innerHTML = '📄 <strong>' + escaparHTML(archivo.name) + '</strong> · ' +
+        (archivo.size / 1024).toFixed(1) + ' KB · ' + numero(tabla.filas.length) + ' filas leídas';
+    }
+
+    var partes = [];
+    if (tabla.aviso) partes.push(tabla.aviso);
+    partes.push(numero(tabla.filas.length) + ' filas · ' + tabla.encabezados.length + ' columnas.');
+    $('#notaOrigen').textContent = partes.join(' ');
+    $('#etiquetaFilas').textContent = '(primeras 10 de ' + numero(tabla.filas.length) + ')';
+
+    var sugerencia = CB.detector.sugerirMapeo(tabla.encabezados, tabla.filas);
+    estado.mapeo = sugerencia.mapeo;
+
+    pintarMapeo();
+    pintarTablaPrevia();
+
+    mostrar('#paso-2');
+    mostrar('#paso-3');
+    ocultar('#paso-4');
+    $('#paso-2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    avisarSiFaltaEmail();
+  }
+
+  function pintarMapeo() {
+    var cont = $('#contenedorMapeo');
+    cont.innerHTML = '';
+
+    estado.tabla.encabezados.forEach(function (enc, idx) {
+      var item = crear('div', 'mapeo__item');
+
+      item.appendChild(crear('div', 'mapeo__origen', enc));
+
+      // Muestra de hasta 3 valores reales de esa columna
+      var ejemplos = [];
+      for (var i = 0; i < estado.tabla.filas.length && ejemplos.length < 3; i++) {
+        var v = estado.tabla.filas[i][idx];
+        if (v !== undefined && String(v).trim() !== '') ejemplos.push(String(v).trim());
+      }
+      item.appendChild(crear('div', 'mapeo__muestra', ejemplos.join(' · ') || '(sin datos)'));
+
+      var sel = crear('select');
+      sel.dataset.columna = idx;
+      CB.detector.CAMPOS.forEach(function (c) {
+        var o = crear('option', null, c.etiqueta);
+        o.value = c.id;
+        sel.appendChild(o);
+      });
+      sel.value = estado.mapeo[idx] || 'IGNORAR';
+      if (sel.value !== 'IGNORAR') item.classList.add('mapeo__item--asignado');
+
+      sel.addEventListener('change', function () {
+        var campo = this.value;
+        var col = parseInt(this.dataset.columna, 10);
+
+        // Un mismo campo no puede estar en dos columnas: liberamos la anterior
+        if (campo !== 'IGNORAR') {
+          Object.keys(estado.mapeo).forEach(function (otra) {
+            if (parseInt(otra, 10) !== col && estado.mapeo[otra] === campo) {
+              estado.mapeo[otra] = 'IGNORAR';
+            }
+          });
+        }
+        estado.mapeo[col] = campo;
+        pintarMapeo();
+        pintarTablaPrevia();
+        avisarSiFaltaEmail();
+      });
+
+      item.appendChild(sel);
+      cont.appendChild(item);
+    });
+  }
+
+  function avisarSiFaltaEmail() {
+    var hayEmail = Object.keys(estado.mapeo).some(function (k) { return estado.mapeo[k] === 'EMAIL'; });
+    var requiere = $('#optRequerirEmail').checked;
+    if (!hayEmail && requiere) {
+      error('No se detectó ninguna columna de email. Asígnala manualmente arriba o desmarca ' +
+            '«Descartar contactos sin email válido» si solo vas a importar teléfonos.');
+    } else {
+      limpiarError();
+    }
+  }
+
+  function pintarTablaPrevia() {
+    var tabla = $('#tablaPrevia');
+    tabla.innerHTML = '';
+
+    var thead = crear('thead');
+    var trh = crear('tr');
+    estado.tabla.encabezados.forEach(function (enc, idx) {
+      var th = crear('th');
+      th.appendChild(document.createTextNode(enc));
+      var campo = estado.mapeo[idx];
+      if (campo && campo !== 'IGNORAR') {
+        th.appendChild(crear('span', 'tabla__etiqueta', campo));
+      }
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    tabla.appendChild(thead);
+
+    var tbody = crear('tbody');
+    estado.tabla.filas.slice(0, 10).forEach(function (fila) {
+      var tr = crear('tr');
+      estado.tabla.encabezados.forEach(function (_, idx) {
+        var valor = fila[idx] === undefined ? '' : String(fila[idx]);
+        var td = crear('td', null, valor);
+        td.title = valor;
+
+        // Marcamos en rojo los valores inválidos del campo asignado
+        var campo = estado.mapeo[idx];
+        if (valor.trim()) {
+          if (campo === 'EMAIL' && !CB.validacion.pareceEmail(valor)) td.className = 'celda--mala';
+          if (campo === 'TELEFONO' && !CB.telefono.normalizar(valor, $('#optPais').value).ok) {
+            td.className = 'celda--mala';
+          }
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    tabla.appendChild(tbody);
+  }
+
+  // ===========================================================================
+  // Plantillas de mapeo (localStorage)
+  // ===========================================================================
+  function leerPlantillas() {
+    try { return JSON.parse(localStorage.getItem(CLAVE_PLANTILLAS) || '{}'); }
+    catch (e) { return {}; }
+  }
+  function escribirPlantillas(obj) {
+    try { localStorage.setItem(CLAVE_PLANTILLAS, JSON.stringify(obj)); }
+    catch (e) { brindis('No se pudieron guardar las plantillas en este navegador.'); }
+  }
+  function cargarListaPlantillas() {
+    var sel = $('#selectorPlantilla');
+    var guardadas = leerPlantillas();
+    sel.innerHTML = '<option value="">— Ninguna —</option>';
+    Object.keys(guardadas).sort().forEach(function (n) {
+      var o = crear('option', null, n);
+      o.value = n;
+      sel.appendChild(o);
+    });
+  }
+  function guardarPlantilla() {
+    if (!estado.tabla) { brindis('Carga primero un archivo.'); return; }
+    var nombre = prompt('Nombre para esta plantilla de mapeo:', estado.nombreArchivo || 'Mi plantilla');
+    if (!nombre) return;
+
+    var guardadas = leerPlantillas();
+    // Guardamos por NOMBRE de encabezado (no por posición) para que funcione
+    // aunque el orden de las columnas cambie en el próximo archivo.
+    var porEncabezado = {};
+    estado.tabla.encabezados.forEach(function (enc, idx) {
+      porEncabezado[CB.detector.normalizarClave(enc)] = estado.mapeo[idx] || 'IGNORAR';
+    });
+    guardadas[nombre] = { encabezados: porEncabezado, creada: new Date().toISOString() };
+    escribirPlantillas(guardadas);
+    cargarListaPlantillas();
+    $('#selectorPlantilla').value = nombre;
+    brindis('Plantilla «' + nombre + '» guardada.');
+  }
+  function borrarPlantilla() {
+    var nombre = $('#selectorPlantilla').value;
+    if (!nombre) { brindis('Selecciona primero una plantilla.'); return; }
+    var guardadas = leerPlantillas();
+    delete guardadas[nombre];
+    escribirPlantillas(guardadas);
+    cargarListaPlantillas();
+    brindis('Plantilla eliminada.');
+  }
+  function aplicarPlantilla() {
+    var nombre = $('#selectorPlantilla').value;
+    if (!nombre || !estado.tabla) return;
+    var p = leerPlantillas()[nombre];
+    if (!p) return;
+
+    var aplicadas = 0;
+    estado.tabla.encabezados.forEach(function (enc, idx) {
+      var clave = CB.detector.normalizarClave(enc);
+      if (p.encabezados[clave]) { estado.mapeo[idx] = p.encabezados[clave]; aplicadas++; }
+    });
+    pintarMapeo();
+    pintarTablaPrevia();
+    brindis(aplicadas + ' columna(s) asignadas desde la plantilla.');
+  }
+
+  // ===========================================================================
+  // Paso 3: procesamiento
+  // ===========================================================================
+  function opcionesActuales() {
+    return {
+      mapeo: estado.mapeo,
+      paisPorDefecto: $('#optPais').value,
+      formatoTelefono: $('#optFormatoTel').value,
+      eliminarDuplicados: $('#optDuplicados').checked,
+      criterioDuplicado: $('#optCriterioDup').value,
+      requerirEmail: $('#optRequerirEmail').checked,
+      capitalizarNombres: $('#optCapitalizar').checked,
+      dividirNombreCompleto: $('#optDividirNombre').checked,
+      omitirColumnasVacias: $('#optOmitirVacias').checked,
+      perfil: $('#optPerfil').value,
+      delimitador: $('#optDelimitador').value,
+      valoresFijos: {
+        LISTA: $('#optListaFija').value.trim(),
+        EMPRESA: $('#optEmpresaFija').value.trim()
+      }
+    };
+  }
+
+  function procesar() {
+    if (!estado.tabla) { error('Carga primero un archivo o pega una lista.'); return; }
+
+    var opciones = opcionesActuales();
+    var hayEmail = Object.keys(opciones.mapeo).some(function (k) { return opciones.mapeo[k] === 'EMAIL'; });
+    if (!hayEmail && opciones.requerirEmail) {
+      error('Necesitas asignar una columna al campo EMAIL (o desmarcar «Descartar contactos sin email válido»).');
+      return;
+    }
+
+    $('#btnProcesar').disabled = true;
+    mostrar('#bloqueProgreso');
+    actualizarProgreso(0, 'Preparando…');
+
+    // En la versión "todo en uno" no hay archivo de worker que cargar:
+    // se procesa en el hilo principal por lotes (ver procesarEnHiloPrincipal).
+    if (typeof Worker !== 'undefined' && !window.__ARCHIVO_UNICO__) {
+      try {
+        procesarConWorker(opciones);
+        return;
+      } catch (e) {
+        // Abrir la página con doble clic (file://) impide usar Workers:
+        // seguimos en el hilo principal, troceando el trabajo.
+        console.warn('Web Worker no disponible, se procesa en el hilo principal.', e);
+      }
+    }
+    procesarEnHiloPrincipal(opciones);
+  }
+
+  function procesarConWorker(opciones) {
+    if (estado.trabajador) estado.trabajador.terminate();
+    var w = new Worker('js/worker/procesador.worker.js');
+    estado.trabajador = w;
+
+    var falloTemprano = true;
+    w.onmessage = function (e) {
+      falloTemprano = false;
+      var d = e.data;
+      if (d.tipo === 'progreso') {
+        var texto = d.fase === 'csv'
+          ? 'Generando el archivo CSV…'
+          : 'Procesando ' + numero(d.procesadas) + ' de ' + numero(d.total) + ' filas…';
+        actualizarProgreso(d.porcentaje, texto);
+      } else if (d.tipo === 'listo') {
+        w.terminate(); estado.trabajador = null;
+        mostrarResultado(d);
+      } else if (d.tipo === 'error') {
+        w.terminate(); estado.trabajador = null;
+        finProceso();
+        error('Error durante el procesamiento: ' + d.mensaje);
+      }
+    };
+    w.onerror = function (ev) {
+      w.terminate(); estado.trabajador = null;
+      if (falloTemprano) {
+        // Normalmente ocurre al abrir el HTML con file://
+        console.warn('Worker no operativo, se usa el hilo principal.', ev.message);
+        procesarEnHiloPrincipal(opciones);
+      } else {
+        finProceso();
+        error('Error en el procesador: ' + (ev.message || 'desconocido'));
+      }
+    };
+
+    w.postMessage({ tipo: 'procesar', filas: estado.tabla.filas, opciones: opciones });
+  }
+
+  /** Alternativa sin Worker: se procesa por lotes con pausas para no congelar la UI. */
+  function procesarEnHiloPrincipal(opciones) {
+    var filas = estado.tabla.filas;
+    var est = CB.procesador.crearEstado(opciones);
+    var i = 0;
+    var LOTE = 1500;
+
+    function siguiente() {
+      var fin = Math.min(i + LOTE, filas.length);
+      CB.procesador.procesarLote(est, filas.slice(i, fin));
+      i = fin;
+
+      actualizarProgreso(
+        Math.floor((i / filas.length) * 100),
+        'Procesando ' + numero(i) + ' de ' + numero(filas.length) + ' filas…'
+      );
+
+      if (i < filas.length) {
+        setTimeout(siguiente, 0);
+      } else {
+        actualizarProgreso(100, 'Generando el archivo CSV…');
+        setTimeout(function () {
+          var csv = CB.exportador.generarCSV(est.contactos, {
+            perfil: opciones.perfil,
+            delimitador: opciones.delimitador,
+            omitirColumnasVacias: opciones.omitirColumnasVacias
+          });
+          mostrarResultado({
+            csv: csv,
+            estadisticas: est.estadisticas,
+            muestra: est.contactos.slice(0, 200),
+            invalidos: est.invalidos.slice(0, 500),
+            totalInvalidos: est.invalidos.length,
+            totalContactos: est.contactos.length
+          });
+        }, 20);
+      }
+    }
+    setTimeout(siguiente, 20);
+  }
+
+  function actualizarProgreso(pct, texto) {
+    $('#progresoRelleno').style.width = pct + '%';
+    $('#progresoTexto').textContent = texto + ' (' + pct + ' %)';
+  }
+
+  function finProceso() {
+    $('#btnProcesar').disabled = false;
+    ocultar('#bloqueProgreso');
+  }
+
+  // ===========================================================================
+  // Paso 4: resultado
+  // ===========================================================================
+  function mostrarResultado(datos) {
+    estado.resultado = datos;
+    finProceso();
+    limpiarError();
+
+    var e = datos.estadisticas;
+    var tarjetas = [
+      { valor: datos.totalContactos, etiqueta: 'Contactos listos', clase: 'estadistica--bien' },
+      { valor: e.filasLeidas,        etiqueta: 'Filas leídas',     clase: '' },
+      { valor: e.duplicados,         etiqueta: 'Duplicados eliminados', clase: e.duplicados ? 'estadistica--aviso' : '' },
+      { valor: datos.totalInvalidos, etiqueta: 'Descartados',      clase: datos.totalInvalidos ? 'estadistica--mal' : '' },
+      { valor: e.emailInvalido,      etiqueta: 'Emails inválidos', clase: e.emailInvalido ? 'estadistica--mal' : '' },
+      { valor: e.telefonosValidos,   etiqueta: 'Teléfonos válidos', clase: '' }
+    ];
+
+    var cont = $('#estadisticas');
+    cont.innerHTML = '';
+    tarjetas.forEach(function (t) {
+      var d = crear('div', 'estadistica ' + t.clase);
+      d.appendChild(crear('div', 'estadistica__valor', numero(t.valor)));
+      d.appendChild(crear('div', 'estadistica__etiqueta', t.etiqueta));
+      cont.appendChild(d);
+    });
+
+    // Aviso por límite de Brevo
+    var perfil = CB.perfiles.PERFILES[$('#optPerfil').value];
+    if (datos.totalContactos > LIMITE_BREVO) {
+      var al = $('#alertaLimite');
+      al.textContent = 'Tienes ' + numero(datos.totalContactos) + ' contactos y ' + perfil.nombre +
+        ' admite ' + numero(LIMITE_BREVO) + ' por archivo. Divide el CSV antes de importarlo.';
+      al.classList.remove('oculto');
+    } else {
+      ocultar('#alertaLimite');
+    }
+
+    pintarTablaResultado(datos.muestra);
+    pintarTablaErrores(datos.invalidos, datos.totalInvalidos);
+
+    mostrar('#paso-4');
+    $('#paso-4').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    if (datos.totalContactos === 0) {
+      error('No se generó ningún contacto válido. Revisa el mapeo de columnas del paso 2.');
+    }
+  }
+
+  function pintarTablaResultado(muestra) {
+    var perfil = CB.perfiles.PERFILES[$('#optPerfil').value];
+    var tabla = $('#tablaResultado');
+    tabla.innerHTML = '';
+
+    var thead = crear('thead');
+    var trh = crear('tr');
+    perfil.columnas.forEach(function (c) { trh.appendChild(crear('th', null, c[1])); });
+    thead.appendChild(trh);
+    tabla.appendChild(thead);
+
+    var tbody = crear('tbody');
+    muestra.slice(0, 20).forEach(function (ct) {
+      var tr = crear('tr');
+      perfil.columnas.forEach(function (c) {
+        var td = crear('td', null, ct[c[0]] || '');
+        td.title = ct[c[0]] || '';
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    tabla.appendChild(tbody);
+  }
+
+  function pintarTablaErrores(invalidos, total) {
+    $('#etiquetaErrores').textContent = '(' + numero(invalidos.length) +
+      (total > invalidos.length ? ' de ' + numero(total) : '') + ')';
+
+    var tabla = $('#tablaErrores');
+    tabla.innerHTML = '';
+    var thead = crear('thead');
+    var trh = crear('tr');
+    ['Fila', 'Nombre', 'Email', 'Teléfono', 'Motivo'].forEach(function (h) {
+      trh.appendChild(crear('th', null, h));
+    });
+    thead.appendChild(trh);
+    tabla.appendChild(thead);
+
+    var tbody = crear('tbody');
+    invalidos.slice(0, 200).forEach(function (x) {
+      var tr = crear('tr');
+      [x.fila, x.nombre, x.email, x.telefono, x.motivo].forEach(function (v) {
+        tr.appendChild(crear('td', null, v === undefined || v === null ? '' : String(v)));
+      });
+      tbody.appendChild(tr);
+    });
+    tabla.appendChild(tbody);
+  }
+
+  // ===========================================================================
+  // Descarga / portapapeles
+  // ===========================================================================
+  function descargar(bytes, nombre, mime) {
+    var blob = new Blob([bytes], { type: mime });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = nombre;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+
+  function descargarCSV() {
+    if (!estado.resultado) return;
+    var cod = $('#optCodificacion').value;
+    var bytes = CB.exportador.codificar(estado.resultado.csv, cod);
+    var base = ($('#optNombreArchivo').value || 'contactos').replace(/[^\w.\- ]+/g, '').trim() || 'contactos';
+    descargar(bytes, base + '.csv', CB.exportador.tipoMime(cod));
+    brindis('CSV descargado (' + numero(estado.resultado.totalContactos) + ' contactos).');
+  }
+
+  function copiarCSV() {
+    if (!estado.resultado) return;
+    var texto = estado.resultado.csv;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(
+        function () { brindis('CSV copiado al portapapeles.'); },
+        function () { copiaAlternativa(texto); }
+      );
+    } else {
+      copiaAlternativa(texto);
+    }
+  }
+
+  function copiaAlternativa(texto) {
+    var ta = document.createElement('textarea');
+    ta.value = texto;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      brindis('CSV copiado al portapapeles.');
+    } catch (e) {
+      brindis('No se pudo copiar. Usa el botón de descarga.');
+    }
+    document.body.removeChild(ta);
+  }
+
+  function descargarErrores() {
+    if (!estado.resultado) return;
+    var d = $('#optDelimitador').value;
+    var esc = CB.exportador.escapar;
+    var lineas = [['Fila', 'Nombre', 'Email', 'Telefono', 'Motivo'].map(function (h) { return esc(h, d); }).join(d)];
+    estado.resultado.invalidos.forEach(function (x) {
+      lineas.push([x.fila, x.nombre, x.email, x.telefono, x.motivo]
+        .map(function (v) { return esc(v === undefined ? '' : v, d); }).join(d));
+    });
+    var cod = $('#optCodificacion').value;
+    descargar(CB.exportador.codificar(lineas.join('\r\n') + '\r\n', cod),
+              'contactos-descartados.csv', CB.exportador.tipoMime(cod));
+  }
+
+  // ===========================================================================
+  function escaparHTML(txt) {
+    return String(txt).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', iniciar);
+})();
+
+</script>
+</body>
+</html>

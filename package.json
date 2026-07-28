@@ -1,0 +1,20 @@
+{
+  "name": "contactos-a-brevo",
+  "version": "1.0.0",
+  "description": "Conversor local de Excel, CSV, TXT, vCard y exportaciones de WhatsApp a CSV listo para importar en Brevo, Mailchimp o HubSpot. Todo el procesamiento ocurre en el navegador.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "start": "node servidor.js",
+    "dev": "node servidor.js 3000",
+    "test": "node pruebas/pruebas.js",
+    "descargar-xlsx": "node -e \"require('fs').copyFileSync('node_modules/xlsx/dist/xlsx.full.min.js','js/lib/xlsx.full.min.js')\" && echo Copia local de SheetJS lista"
+  },
+  "optionalDependencies": {
+    "xlsx": "0.18.5"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "keywords": ["brevo", "sendinblue", "csv", "contactos", "excel", "whatsapp", "vcard", "mailchimp", "hubspot"]
+}

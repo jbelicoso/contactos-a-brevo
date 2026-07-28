@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contactos → Brevo | Conversor de contactos a CSV</title>
+<meta name="description" content="Convierte Excel, listas de contactos y exportaciones de WhatsApp en un CSV listo para importar en Brevo. Todo el proceso ocurre en tu navegador.">
+<link rel="stylesheet" href="css/estilos.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📇</text></svg>">
+</head>
+<body>
+
+<header class="cabecera">
+  <div class="contenedor cabecera__interior">
+    <div class="marca">
+      <span class="marca__icono" aria-hidden="true">📇</span>
+      <div>
+        <h1 class="marca__titulo">Contactos&nbsp;→&nbsp;Brevo</h1>
+        <p class="marca__sub">Excel, CSV, TXT, vCard y WhatsApp a CSV listo para importar</p>
+      </div>
+    </div>
+    <div class="insignia" title="Ningún dato sale de tu navegador">
+      🔒 100&nbsp;% local · sin servidores
+    </div>
+  </div>
+</header>
+
+<main class="contenedor">
+
+  <!-- ===================================================================== -->
+  <!-- PASO 1 · ENTRADA DE DATOS                                              -->
+  <!-- ===================================================================== -->
+  <section class="tarjeta" id="paso-1">
+    <h2 class="tarjeta__titulo"><span class="paso">1</span> Carga tus contactos</h2>
+
+    <div class="pestanas" role="tablist">
+      <button class="pestana pestana--activa" role="tab" data-panel="panel-archivo">📁 Archivo</button>
+      <button class="pestana" role="tab" data-panel="panel-pegar">📋 Pegar texto</button>
+    </div>
+
+    <!-- Panel: archivo -->
+    <div class="panel panel--activo" id="panel-archivo">
+      <div class="zona-suelta" id="zonaSuelta" tabindex="0" role="button"
+           aria-label="Arrastra un archivo aquí o pulsa para seleccionarlo">
+        <div class="zona-suelta__icono">⬇️</div>
+        <p class="zona-suelta__texto"><strong>Arrastra tu archivo aquí</strong></p>
+        <p class="zona-suelta__ayuda">o pulsa para seleccionarlo</p>
+        <p class="zona-suelta__formatos">.xlsx · .xls · .csv · .tsv · .txt · .vcf — máximo <span id="maxMB">50</span> MB</p>
+        <input type="file" id="entradaArchivo" accept=".xlsx,.xls,.xlsm,.csv,.tsv,.txt,.vcf,.vcard" hidden>
+      </div>
+      <div class="archivo-info oculto" id="archivoInfo"></div>
+
+      <!-- Selector de hoja para archivos Excel con varias hojas -->
+      <div class="campo oculto" id="bloqueHojas">
+        <label for="selectorHoja">Hoja del libro de Excel</label>
+        <select id="selectorHoja"></select>
+      </div>
+    </div>
+
+    <!-- Panel: pegar -->
+    <div class="panel" id="panel-pegar">
+      <label for="areaPegado">Pega aquí tu lista de contactos</label>
+      <textarea id="areaPegado" rows="9" spellcheck="false"
+        placeholder="Ana Torres, ana@ejemplo.com, +593 99 123 4567&#10;Luis Pérez; luis@ejemplo.com; 0987654321&#10;&#10;También funciona con una exportación de chat de WhatsApp o con una lista de números sueltos."></textarea>
+      <div class="fila-botones">
+        <button class="boton boton--primario" id="btnAnalizarTexto">Analizar texto pegado</button>
+        <button class="boton boton--fantasma" id="btnLimpiarTexto">Limpiar</button>
+      </div>
+    </div>
+
+    <div class="alerta alerta--error oculto" id="alertaEntrada"></div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PASO 2 · PREVISUALIZACIÓN Y MAPEO                                      -->
+  <!-- ===================================================================== -->
+  <section class="tarjeta oculto" id="paso-2">
+    <h2 class="tarjeta__titulo"><span class="paso">2</span> Revisa y asigna las columnas</h2>
+    <p class="tarjeta__nota" id="notaOrigen"></p>
+
+    <div class="mapeo" id="contenedorMapeo"></div>
+
+    <div class="plantillas">
+      <label for="selectorPlantilla">Plantillas de mapeo</label>
+      <div class="fila-botones">
+        <select id="selectorPlantilla"><option value="">— Ninguna —</option></select>
+        <button class="boton boton--fantasma" id="btnGuardarPlantilla">Guardar actual</button>
+        <button class="boton boton--fantasma" id="btnBorrarPlantilla">Eliminar</button>
+      </div>
+      <p class="ayuda">Las plantillas se guardan solo en este navegador (localStorage).</p>
+    </div>
+
+    <h3 class="subtitulo">Vista previa de los datos detectados <span class="tenue" id="etiquetaFilas"></span></h3>
+    <div class="tabla-envoltorio">
+      <table class="tabla" id="tablaPrevia"></table>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PASO 3 · OPCIONES                                                      -->
+  <!-- ===================================================================== -->
+  <section class="tarjeta oculto" id="paso-3">
+    <h2 class="tarjeta__titulo"><span class="paso">3</span> Opciones de salida</h2>
+
+    <div class="rejilla">
+      <div class="campo">
+        <label for="optPerfil">Plataforma de destino</label>
+        <select id="optPerfil"></select>
+        <p class="ayuda" id="notaPerfil"></p>
+      </div>
+
+      <div class="campo">
+        <label for="optDelimitador">Delimitador</label>
+        <select id="optDelimitador">
+          <option value=";">Punto y coma ( ; ) — recomendado para Brevo</option>
+          <option value=",">Coma ( , )</option>
+          <option value="&#9;">Tabulación</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="optCodificacion">Codificación</label>
+        <select id="optCodificacion">
+          <option value="utf8bom">UTF-8 con BOM — recomendado (Excel y Brevo)</option>
+          <option value="utf8">UTF-8 sin BOM</option>
+          <option value="latin1">ISO-8859-1 (Latin-1)</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="optPais">País por defecto para teléfonos sin prefijo</label>
+        <select id="optPais"></select>
+      </div>
+
+      <div class="campo">
+        <label for="optFormatoTel">Formato del teléfono</label>
+        <select id="optFormatoTel">
+          <option value="e164">+593991234567 (E.164, el más seguro para Brevo)</option>
+          <option value="legible">+593 99 123 4567 (con espacios)</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="optCriterioDup">Detección de duplicados</label>
+        <select id="optCriterioDup">
+          <option value="email">Por email</option>
+          <option value="telefono">Por teléfono</option>
+          <option value="ambos">Por email o teléfono</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="optListaFija">Valor fijo para la columna LISTA</label>
+        <input type="text" id="optListaFija" placeholder="Ej.: CLIENTES">
+      </div>
+
+      <div class="campo">
+        <label for="optEmpresaFija">Valor fijo para la columna EMPRESA</label>
+        <input type="text" id="optEmpresaFija" placeholder="Ej.: Mi Negocio S.A.">
+      </div>
+
+      <div class="campo">
+        <label for="optNombreArchivo">Nombre del archivo</label>
+        <input type="text" id="optNombreArchivo" value="contactos-brevo">
+      </div>
+    </div>
+
+    <div class="casillas">
+      <label class="casilla"><input type="checkbox" id="optDuplicados" checked> Eliminar contactos duplicados</label>
+      <label class="casilla"><input type="checkbox" id="optRequerirEmail" checked> Descartar contactos sin email válido</label>
+      <label class="casilla"><input type="checkbox" id="optCapitalizar" checked> Corregir mayúsculas de los nombres</label>
+      <label class="casilla"><input type="checkbox" id="optDividirNombre" checked> Dividir nombre completo en nombre y apellido</label>
+      <label class="casilla"><input type="checkbox" id="optOmitirVacias"> Omitir columnas totalmente vacías</label>
+    </div>
+
+    <div class="fila-botones fila-botones--principal">
+      <button class="boton boton--primario boton--grande" id="btnProcesar">⚙️ Generar CSV</button>
+      <button class="boton boton--fantasma" id="btnReiniciar">Empezar de nuevo</button>
+    </div>
+
+    <div class="progreso oculto" id="bloqueProgreso">
+      <div class="progreso__barra"><div class="progreso__relleno" id="progresoRelleno"></div></div>
+      <p class="progreso__texto" id="progresoTexto">Procesando…</p>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- PASO 4 · RESULTADO                                                     -->
+  <!-- ===================================================================== -->
+  <section class="tarjeta oculto" id="paso-4">
+    <h2 class="tarjeta__titulo"><span class="paso">4</span> Resultado</h2>
+
+    <div class="estadisticas" id="estadisticas"></div>
+
+    <div class="alerta alerta--aviso oculto" id="alertaLimite"></div>
+
+    <div class="fila-botones fila-botones--principal">
+      <button class="boton boton--primario boton--grande" id="btnDescargar">⬇️ Descargar CSV</button>
+      <button class="boton boton--secundario" id="btnCopiar">📋 Copiar al portapapeles</button>
+      <button class="boton boton--fantasma" id="btnVerErrores">Ver contactos descartados</button>
+    </div>
+
+    <h3 class="subtitulo">Vista previa del CSV final</h3>
+    <div class="tabla-envoltorio">
+      <table class="tabla" id="tablaResultado"></table>
+    </div>
+
+    <div class="oculto" id="bloqueErrores">
+      <h3 class="subtitulo">Contactos descartados <span class="tenue" id="etiquetaErrores"></span></h3>
+      <div class="tabla-envoltorio">
+        <table class="tabla tabla--error" id="tablaErrores"></table>
+      </div>
+      <button class="boton boton--fantasma" id="btnDescargarErrores">Descargar descartados (CSV)</button>
+    </div>
+  </section>
+
+  <details class="tarjeta tarjeta--ayuda">
+    <summary><strong>¿Cómo importo el archivo en Brevo?</strong></summary>
+    <ol>
+      <li>Entra en Brevo → <em>Contactos</em> → <em>Importar contactos</em>.</li>
+      <li>Sube el archivo <code>.csv</code> generado aquí.</li>
+      <li>En «Separador de columna» elige el mismo delimitador que usaste (por defecto <code>;</code>).</li>
+      <li>Empareja <code>EMAIL</code> con el atributo email y el resto de columnas con sus atributos (créalos en <em>Contactos → Configuración → Atributos</em> si no existen).</li>
+      <li>Marca la lista de destino y confirma que tienes consentimiento de los contactos.</li>
+    </ol>
+    <p class="ayuda">Brevo admite hasta 100.000 contactos por archivo. Si superas ese número, divide el archivo.</p>
+  </details>
+
+</main>
+
+<footer class="pie">
+  <div class="contenedor">
+    <p>Todo el procesamiento ocurre en tu navegador. Ningún contacto se sube a Internet.</p>
+  </div>
+</footer>
+
+<div class="brindis" id="brindis" role="status" aria-live="polite"></div>
+
+<!-- ======================= Librerías ======================= -->
+<!-- SheetJS (lectura de Excel). Se intenta primero una copia local y, si no
+     existe, se descarga desde el CDN. Si no hay Internet, el resto de formatos
+     sigue funcionando con normalidad. -->
+<script src="js/lib/xlsx.full.min.js" onerror="window.__sinXLSXLocal=true"></script>
+<script>
+  if (typeof XLSX === 'undefined') {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+    s.onerror = function () { window.__sinXLSX = true; };
+    document.head.appendChild(s);
+  }
+</script>
+
+<!-- ======================= Núcleo ======================= -->
+<script src="js/nucleo/paises.js"></script>
+<script src="js/nucleo/telefono.js"></script>
+<script src="js/nucleo/validacion.js"></script>
+<script src="js/nucleo/parsers.js"></script>
+<script src="js/nucleo/detector.js"></script>
+<script src="js/nucleo/perfiles.js"></script>
+<script src="js/nucleo/procesador.js"></script>
+<script src="js/nucleo/exportador.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
