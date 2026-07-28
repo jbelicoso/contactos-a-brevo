@@ -1,0 +1,10 @@
+12/03/24, 10:30 - Los mensajes y las llamadas están cifrados de extremo a extremo.
+12/03/24, 10:33 - Ana Torres: Hola a todos, bienvenidos al grupo
+12/03/24, 10:35 - +593 98 765 4321: Buenas, gracias por la invitación
+12/03/24, 10:36 - Ana Torres: ¿Todo bien por allá?
+12/03/24, 10:38 - +593 99 111 2233: Todo perfecto
+12/03/24, 10:41 - Luis Pérez: Yo me sumo mañana
+13/03/24, 09:01 - +34 612 345 678: Desde España saludando
+13/03/24, 09:15 - ~ María J.: Hola equipo
+13/03/24, 11:02 - +52 55 1234 5678: Aquí desde México
+14/03/24, 08:00 - Ana Torres: Recuerden la reunión de hoy

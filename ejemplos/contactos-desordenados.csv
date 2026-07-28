@@ -1,0 +1,11 @@
+Nombre completo;Correo electrónico;Celular;Compañía;Notas internas
+ana torres;ANA.Torres@Ejemplo.com;0991234567;Acme S.A.;cliente vip
+LUIS PÉREZ GARCÍA;luis@ejemplo.com;+593 98 765 4321;Beta Ltda;prospecto
+"Ramírez, María José";maria@ejemplo.com;098 765 4321;;seguimiento marzo
+Carlos Andrés Mora;carlos@ejemplo.com;0999999999;Gamma;
+Ana Torres;ana.torres@ejemplo.com;0991234567;Acme S.A.;duplicado a propósito
+Pedro sin correo;;0987111222;Delta;este se descarta si exiges email
+Sofía Vera;sofia@gmial.com;+34 612 345 678;Épsilon;dominio mal escrito
+Jorge Luis Cabrera Ruiz;jorge@ejemplo.com;(02) 245 6789;Zeta;teléfono fijo
+Elena Ruiz;elena@ejemplo;0993334444;;email inválido
+Diego Salas;diego@ejemplo.com;+1 415 555 0132;Omega Inc;contacto en EE. UU.

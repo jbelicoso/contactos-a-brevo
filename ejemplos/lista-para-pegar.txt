@@ -1,0 +1,6 @@
+Ana Torres ana@ejemplo.com +593 99 123 4567
+Luis Pérez luis@ejemplo.com 0987654321
+María José Ramírez maria@ejemplo.com 0998765432
+Carlos Mora carlos@ejemplo.com
+Sofía Vera sofia@ejemplo.com +34 612 345 678
+Diego Salas diego@ejemplo.com +1 415 555 0132
