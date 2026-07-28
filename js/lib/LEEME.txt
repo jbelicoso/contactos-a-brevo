@@ -1,0 +1,38 @@
+Carpeta para librerías locales
+==============================
+
+Esta carpeta está vacía a propósito.
+
+La aplicación necesita SheetJS ÚNICAMENTE para leer archivos de Excel
+(.xlsx / .xls). El resto de formatos (CSV, TSV, TXT, VCF, texto pegado)
+funcionan sin ninguna librería externa.
+
+Comportamiento por defecto
+--------------------------
+index.html intenta cargar primero:
+
+    js/lib/xlsx.full.min.js       (copia local, no incluida)
+
+y si no la encuentra, la descarga del CDN:
+
+    https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js
+
+
+¿Quieres funcionar 100 % sin Internet?
+--------------------------------------
+Descarga el archivo una sola vez y guárdalo en esta carpeta con el
+nombre exacto "xlsx.full.min.js":
+
+    curl -L -o js/lib/xlsx.full.min.js \
+      https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js
+
+o, si prefieres npm:
+
+    npm install
+    cp node_modules/xlsx/dist/xlsx.full.min.js js/lib/
+
+A partir de ahí la aplicación no hará ninguna petición a Internet.
+
+Nota de privacidad: SheetJS analiza los archivos localmente, en el
+navegador. Descargar la librería no implica subir tus contactos a
+ningún sitio.
